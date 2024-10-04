@@ -2,8 +2,8 @@ import "codemirror/mode/markdown/markdown.js"
 import { defineComponent } from "vue"
 import { EditorView } from "../editor/EditorView"
 import { EditorState } from "../editor/useEditorState"
+import { MmlHtmlRenderer } from "../miniML/MmlHtmlRenderer"
 import { MmlParser } from "../miniML/MmlParser"
-import { renderMmlToHtml } from "../miniML/renderMmlToHtml"
 import { DescriptionFormatter } from "../prettyPrint/DescriptionFormatter"
 import { inspect } from "../prettyPrint/inspect"
 
@@ -28,7 +28,8 @@ class _MmlEditorState extends EditorState {
         this.output = null
         const document = new MmlParser(code).parseDocument()
         this.ast = inspect(document, { color: DescriptionFormatter.htmlColor })
-        this.output = renderMmlToHtml(document)
+        const renderer = new MmlHtmlRenderer()
+        this.output = renderer.render(document)
         this.ready = true
         // eslint-disable-next-line no-console
         console.log(this.output)
