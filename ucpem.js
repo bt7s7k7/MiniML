@@ -7,4 +7,5 @@ project.prefix("src").res("miniML",
     github("bt7s7k7/Struct").res("struct"),
     github("bt7s7k7/CommonTypes").res("comTypes"),
     github("bt7s7k7/Apsides").res("editor"),
+    github("bt7s7k7/LogLib").res("prettyPrint"),
 )
