@@ -51,7 +51,8 @@ export namespace SyntaxNode {
     }
 
     export class TextBlock extends Struct.define("TextBlock", {
-        content: _SyntaxNode_t.base.as(Type.array)
+        content: _SyntaxNode_t.base.as(Type.array),
+        heading: Type.enum(1, 2, 3, 4).as(Type.nullable)
     }) {
         public readonly kind = "text-block"
         declare public content: SyntaxNode[]

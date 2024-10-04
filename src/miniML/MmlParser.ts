@@ -3,7 +3,7 @@ import { SyntaxNode } from "./SyntaxNode"
 
 function _isSpecialChar(v: string, i: number) {
     const c = v[i]
-    return c == "*" || c == "_" || c == "\\" || c == "`"
+    return c == "*" || c == "_" || c == "\\" || c == "`" || c == "\n"
 }
 
 export class MmlParser extends GenericParser {
@@ -74,6 +74,17 @@ export class MmlParser extends GenericParser {
 
     public parseTextBlock() {
         const content: SyntaxNode[] = []
+        let heading: SyntaxNode.TextBlock["heading"] = null
+
+        if (this.consume("####")) {
+            heading = 4
+        } else if (this.consume("###")) {
+            heading = 3
+        } else if (this.consume("##")) {
+            heading = 2
+        } else if (this.consume("#")) {
+            heading = 1
+        }
 
         while (!this.isDone()) {
             this.parseFragment("\n", content)
@@ -82,7 +93,7 @@ export class MmlParser extends GenericParser {
 
         if (content.length == 0) return null
 
-        return new SyntaxNode.TextBlock({ content })
+        return new SyntaxNode.TextBlock({ content, heading })
     }
 
     public parseDocument() {

@@ -23,7 +23,17 @@ export function renderMmlToHtml(node: SyntaxNode): string {
 
         return ` <${element}${_renderFormat(node)}>${_renderContent(node.content)}</${element}>`
     } else if (node.kind == "text-block") {
-        return ` <p>${_renderContent(node.content)}</p>`
+        const element = node.heading == 4 ? (
+            "h4"
+        ) : node.heading == 3 ? (
+            "h3"
+        ) : node.heading == 2 ? (
+            "h2"
+        ) : node.heading == 1 ? (
+            "h1"
+        ) : "p"
+
+        return ` <${element}>${_renderContent(node.content)}</${element}>`
     } else if (node.kind == "segment") {
         const format = _renderFormat(node)
         if (format != "") {
