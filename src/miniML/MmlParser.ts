@@ -1,9 +1,14 @@
 import { GenericParser } from "../comTypes/GenericParser"
+import { isWhitespace } from "../comTypes/util"
 import { SyntaxNode } from "./SyntaxNode"
 
 function _isSpecialChar(v: string, i: number) {
     const c = v[i]
-    return c == "*" || c == "_" || c == "\\" || c == "`" || c == "\n"
+    return c == "*" || c == "_" || c == "\\" || c == "`" || c == "\n" || c == "!" || c == "[" || c == "]"
+}
+
+function _isAttrTerminator(v: string, i: number) {
+    return v[i] == "}" || isWhitespace(v, i)
 }
 
 export class MmlParser extends GenericParser {
@@ -39,22 +44,75 @@ export class MmlParser extends GenericParser {
                 continue
             }
 
+            let object: SyntaxNode.Inline | null = null
+
             let newTerm: string | null = null
             if ((newTerm = this.consume(["**", "__"]))) {
                 const content = this.parseFragment(newTerm)
-                result.push(new SyntaxNode.Span({ content, modifier: "bold" }))
-                continue
-            }
-
-            if ((newTerm = this.consume(["*", "_"]))) {
+                object = new SyntaxNode.Span({ content, modifier: "bold" })
+            } else if ((newTerm = this.consume(["*", "_"]))) {
                 const content = this.parseFragment(newTerm)
-                result.push(new SyntaxNode.Span({ content, modifier: "italics" }))
-                continue
+                object = new SyntaxNode.Span({ content, modifier: "italics" })
+            } else if (this.consume("`")) {
+                const content = this.parseFragment("`")
+                object = new SyntaxNode.Span({ content, modifier: "code" })
+            } else if (this.consume("[")) {
+                const content = this.parseFragment("]")
+                object = new SyntaxNode.Object({ content })
+
+                if (this.consume("(")) {
+                    const url = this.readUntil(")")
+                    object.url = url
+                    this.index++
+                }
+            } else if (this.consume("![")) {
+                const content = this.readUntil("]")
+                this.index++
+
+                object = new SyntaxNode.Object({ content: [], media: true, attributes: new Map([["alt", content]]) })
+
+                if (this.consume("(")) {
+                    const url = this.readUntil(")")
+                    object.url = url
+                    this.index++
+                }
             }
 
-            if (this.consume("`")) {
-                const content = this.parseFragment("`")
-                result.push(new SyntaxNode.Span({ content, modifier: "code" }))
+            if (object != null) {
+                result.push(object)
+
+                if (this.consume("{")) {
+                    while (!this.isDone()) {
+                        this.skipWhile(isWhitespace)
+
+                        if (this.consume("}")) {
+                            break
+                        }
+
+                        if (this.consume(".")) {
+                            const className = this.readUntil(_isAttrTerminator)
+                            object.classList ??= []
+                            object.classList.push(className)
+                            continue
+                        }
+
+                        const attrName = this.readUntil((v, i) => v[i] == "=" || v[i] == "}" || isWhitespace(v, i))
+                        let attrValue: string | null = null
+
+                        if (this.consume("=")) {
+                            if (this.consume("\"")) {
+                                attrValue = this.readUntil("\"")
+                                this.index++
+                            } else {
+                                attrValue = this.readUntil(_isAttrTerminator)
+                            }
+                        }
+
+                        object.attributes ??= new Map()
+                        object.attributes.set(attrName, attrValue ?? "")
+                    }
+                }
+
                 continue
             }
 

@@ -30,6 +30,8 @@ export const SyntaxNode_t = _SyntaxNode_t.base as Type<SyntaxNode>
 const _FORMAT_PROPS = {
     modifier: Type.enum("bold", "italics", "code").as(Type.nullable),
     color: ColorModifier_t.as(Type.nullable),
+    classList: Type.string.as(Type.array).as(Type.nullable),
+    attributes: Type.string.as(Type.map).as(Type.nullable),
 }
 
 
@@ -49,6 +51,18 @@ export namespace SyntaxNode {
         public readonly kind = "span"
         declare public content: SyntaxNode[]
     }
+
+    export class Object extends Struct.define("Object", {
+        ..._FORMAT_PROPS,
+        content: _SyntaxNode_t.base.as(Type.array),
+        url: Type.string.as(Type.nullable),
+        media: Type.boolean.as(Type.nullable)
+    }) {
+        public readonly kind = "object"
+        declare public content: SyntaxNode[]
+    }
+
+    export type Inline = Span | Object
 
     export class TextBlock extends Struct.define("TextBlock", {
         content: _SyntaxNode_t.base.as(Type.array),
