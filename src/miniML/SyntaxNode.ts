@@ -74,11 +74,14 @@ export namespace SyntaxNode {
 
     export class Segment extends Struct.define("Segment", {
         ..._FORMAT_PROPS,
+        type: Type.enum("ul", "ol", "li", "quote").as(Type.nullable),
         content: _SyntaxNode_t.base.as(Type.array)
     }) {
         public readonly kind = "segment"
         declare public content: SyntaxNode[]
     }
+
+    export type SegmentType = Segment["type"]
 }
 
 for (const element of Object.values(SyntaxNode)) {

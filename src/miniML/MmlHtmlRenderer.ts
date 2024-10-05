@@ -83,8 +83,18 @@ export class MmlHtmlRenderer {
 
     protected _renderSegment(node: SyntaxNode.Segment) {
         const format = this._renderFormat(node)
-        if (format != "") {
-            return ` <span${this._renderFormat(node)}>${this._renderContent(node.content)}</span>`
+        if (format != "" || node.type != null) {
+            const element = node.type == "ol" ? (
+                "ol"
+            ) : node.type == "ul" ? (
+                "ul"
+            ) : node.type == "li" ? (
+                "li"
+            ) : node.type == "quote" ? (
+                "blockquote"
+            ) : unreachable()
+
+            return ` <${element}${this._renderFormat(node)}>${this._renderContent(node.content)}</${element}>`
         } else {
             return this._renderContent(node.content)
         }

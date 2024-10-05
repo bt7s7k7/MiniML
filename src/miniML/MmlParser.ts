@@ -1,5 +1,5 @@
 import { GenericParser } from "../comTypes/GenericParser"
-import { isWhitespace } from "../comTypes/util"
+import { isNumber, isWhitespace } from "../comTypes/util"
 import { SyntaxNode } from "./SyntaxNode"
 
 function _isSpecialChar(v: string, i: number) {
@@ -9,6 +9,15 @@ function _isSpecialChar(v: string, i: number) {
 
 function _isAttrTerminator(v: string, i: number) {
     return v[i] == "}" || isWhitespace(v, i)
+}
+
+function _isIndent(v: string, i: number) {
+    return v[i] == " " || v[i] == "\t"
+}
+
+export interface SegmentHistory {
+    indent: number
+    kind: SyntaxNode.SegmentType
 }
 
 export class MmlParser extends GenericParser {
@@ -130,38 +139,143 @@ export class MmlParser extends GenericParser {
         return result
     }
 
-    public parseTextBlock() {
-        const content: SyntaxNode[] = []
-        let heading: SyntaxNode.TextBlock["heading"] = null
+    public parseIndent() {
+        const currIndentString = this.readWhile(_isIndent)
+        const currIndent = currIndentString.length
+        return currIndent
+    }
 
-        if (this.consume("####")) {
-            heading = 4
-        } else if (this.consume("###")) {
-            heading = 3
-        } else if (this.consume("##")) {
-            heading = 2
-        } else if (this.consume("#")) {
-            heading = 1
+    public parseSegmentType() {
+        const start = this.index
+
+        let type: SyntaxNode.SegmentType = null
+
+        if (this.readWhile(isNumber) && this.consume([".", ")"])) {
+            type = "ol"
+        } else {
+            this.index = start
+
+            if (this.consume(["- ", "+ ", "* "])) {
+                type = "ul"
+            }
         }
+
+        return type
+    }
+
+    public parseTextBlock() {
+        const textBlock = new SyntaxNode.TextBlock({ content: this.parseFragment("\n") })
+        return textBlock
+    }
+
+    public parseSegment(indent: number, segment: SyntaxNode.Segment) {
+        let lastElement: SyntaxNode | null = null
 
         while (!this.isDone()) {
-            this.parseFragment("\n", content)
-            if (this.consume("\n")) break
+            const start = this.index
+            const currIndent = this.parseIndent()
+            if (currIndent < indent) {
+                this.index = start
+                return
+            }
+
+            let heading: SyntaxNode.TextBlock["heading"] = null
+
+            if (this.consume("####")) {
+                heading = 4
+            } else if (this.consume("###")) {
+                heading = 3
+            } else if (this.consume("##")) {
+                heading = 2
+            } else if (this.consume("#")) {
+                heading = 1
+            }
+
+            if (heading != null) {
+                const textBlock = this.parseTextBlock()
+                textBlock.heading = heading
+                lastElement = textBlock
+                segment.content.push(textBlock)
+                continue
+            }
+
+            if (this.consume(">")) {
+                let quote: SyntaxNode.Segment
+                if (lastElement?.kind == "segment" && lastElement.type == "quote") {
+                    quote = lastElement
+                } else {
+                    quote = new SyntaxNode.Segment({ type: "quote", content: [] })
+                    segment.content.push(quote)
+                }
+
+                const textBlock = this.parseTextBlock()
+                quote.content.push(textBlock)
+
+                lastElement = quote
+                this.parseSegment(currIndent + 1, quote)
+                continue
+            }
+
+            if (this.consume(["- ", "+ ", "* "])) {
+                let ul: SyntaxNode.Segment
+                if (lastElement?.kind == "segment" && lastElement.type == "ul") {
+                    ul = lastElement
+                } else {
+                    ul = new SyntaxNode.Segment({ type: "ul", content: [] })
+                    segment.content.push(ul)
+                }
+
+                const li = new SyntaxNode.Segment({ type: "li", content: [] })
+                ul.content.push(li)
+
+                const textBlock = this.parseTextBlock()
+                li.content.push(textBlock)
+
+                lastElement = ul
+                this.parseSegment(currIndent + 1, li)
+                continue
+            }
+
+            const olBacktrack = this.index
+            if (this.readWhile(isNumber) && this.consume([".", ")"])) {
+                let ol: SyntaxNode.Segment
+                if (lastElement?.kind == "segment" && lastElement.type == "ol") {
+                    ol = lastElement
+                } else {
+                    ol = new SyntaxNode.Segment({ type: "ol", content: [] })
+                    segment.content.push(ol)
+                }
+
+                const li = new SyntaxNode.Segment({ type: "li", content: [] })
+                ol.content.push(li)
+
+                const textBlock = this.parseTextBlock()
+                li.content.push(textBlock)
+
+                lastElement = ol
+                this.parseSegment(currIndent + 1, li)
+                continue
+            } else {
+                this.index = olBacktrack
+            }
+
+            const textBlock = this.parseTextBlock()
+            if (textBlock.content.length == 0) {
+                lastElement = null
+                continue
+            }
+            segment.content.push(textBlock)
+            lastElement = textBlock
         }
 
-        if (content.length == 0) return null
-
-        return new SyntaxNode.TextBlock({ content, heading })
+        return
     }
 
     public parseDocument() {
-        const content: SyntaxNode[] = []
+        const rootSegment = new SyntaxNode.Segment({ content: [] })
 
-        while (!this.isDone()) {
-            const block = this.parseTextBlock()
-            if (block) content.push(block)
-        }
+        this.parseSegment(0, rootSegment)
 
-        return new SyntaxNode.Segment({ content })
+        return rootSegment
     }
 }
