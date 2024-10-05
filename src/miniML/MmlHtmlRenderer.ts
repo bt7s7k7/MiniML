@@ -67,20 +67,6 @@ export class MmlHtmlRenderer {
         return ` <${element}${this._renderFormat(node, new Map([[attr, node.url!]]))}>${this._renderContent(node.content)}</${element}>`
     }
 
-    protected _renderTextBlock(node: SyntaxNode.TextBlock) {
-        const element = node.heading == 4 ? (
-            "h4"
-        ) : node.heading == 3 ? (
-            "h3"
-        ) : node.heading == 2 ? (
-            "h2"
-        ) : node.heading == 1 ? (
-            "h1"
-        ) : "p"
-
-        return ` <${element}>${this._renderContent(node.content)}</${element}>`
-    }
-
     protected _renderSegment(node: SyntaxNode.Segment) {
         const format = this._renderFormat(node)
         if (format != "" || node.type != null) {
@@ -92,6 +78,16 @@ export class MmlHtmlRenderer {
                 "li"
             ) : node.type == "quote" ? (
                 "blockquote"
+            ) : node.type == "p" ? (
+                "p"
+            ) : node.type == 4 ? (
+                "h4"
+            ) : node.type == 3 ? (
+                "h3"
+            ) : node.type == 2 ? (
+                "h2"
+            ) : node.type == 1 ? (
+                "h1"
             ) : unreachable()
 
             return ` <${element}${this._renderFormat(node)}>${this._renderContent(node.content)}</${element}>`
@@ -107,8 +103,6 @@ export class MmlHtmlRenderer {
             return this._renderSpan(node)
         } else if (node.kind == "object") {
             return this._renderObject(node)
-        } else if (node.kind == "text-block") {
-            return this._renderTextBlock(node)
         } else if (node.kind == "segment") {
             return this._renderSegment(node)
         } else unreachable()

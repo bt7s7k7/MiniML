@@ -64,17 +64,9 @@ export namespace SyntaxNode {
 
     export type Inline = Span | Object
 
-    export class TextBlock extends Struct.define("TextBlock", {
-        content: _SyntaxNode_t.base.as(Type.array),
-        heading: Type.enum(1, 2, 3, 4).as(Type.nullable)
-    }) {
-        public readonly kind = "text-block"
-        declare public content: SyntaxNode[]
-    }
-
     export class Segment extends Struct.define("Segment", {
         ..._FORMAT_PROPS,
-        type: Type.enum("ul", "ol", "li", "quote").as(Type.nullable),
+        type: Type.enum("p", 1, 2, 3, 4, "ul", "ol", "li", "quote").as(Type.nullable),
         content: _SyntaxNode_t.base.as(Type.array)
     }) {
         public readonly kind = "segment"

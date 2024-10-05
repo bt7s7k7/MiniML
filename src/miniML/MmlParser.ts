@@ -164,7 +164,7 @@ export class MmlParser extends GenericParser {
     }
 
     public parseTextBlock() {
-        const textBlock = new SyntaxNode.TextBlock({ content: this.parseFragment("\n") })
+        const textBlock = new SyntaxNode.Segment({ type: "p", content: this.parseFragment("\n") })
         return textBlock
     }
 
@@ -179,7 +179,7 @@ export class MmlParser extends GenericParser {
                 return
             }
 
-            let heading: SyntaxNode.TextBlock["heading"] = null
+            let heading: SyntaxNode.Segment["type"] = null
 
             if (this.consume("####")) {
                 heading = 4
@@ -193,7 +193,7 @@ export class MmlParser extends GenericParser {
 
             if (heading != null) {
                 const textBlock = this.parseTextBlock()
-                textBlock.heading = heading
+                textBlock.type = heading
                 lastElement = textBlock
                 segment.content.push(textBlock)
                 continue
