@@ -16,3 +16,20 @@ li>p {
 
     margin-bottom: 0;
 }
+
+code {
+    border: 1px solid #d0d7de;
+    padding: 0.2em;
+    border-radius: 0.2em;
+}
+
+pre {
+    border: 1px solid #d0d7de;
+    padding: 0.4em;
+    border-radius: 0.2em;
+
+    &>code {
+        border: none;
+        padding: 0;
+    }
+}

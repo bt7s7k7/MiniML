@@ -179,6 +179,18 @@ export class MmlParser extends GenericParser {
                 return
             }
 
+            if (this.consume("```")) {
+                const type = this.readUntil("\n").trim()
+                this.index++
+                const content = this.readUntil("```")
+                this.index += 3
+                const codeBlock = new SyntaxNode.CodeBlock({ lang: type != "" ? type : null, content })
+                lastElement = codeBlock
+                segment.content.push(codeBlock)
+                continue
+            }
+
+
             let heading: SyntaxNode.Segment["type"] = null
 
             if (this.consume("####")) {

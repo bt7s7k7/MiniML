@@ -52,6 +52,13 @@ export namespace SyntaxNode {
         declare public content: SyntaxNode[]
     }
 
+    export class CodeBlock extends Struct.define("CodeBlock", {
+        lang: Type.string.as(Type.nullable),
+        content: Type.string
+    }) {
+        public readonly kind = "code-block"
+    }
+
     export class Object extends Struct.define("Object", {
         ..._FORMAT_PROPS,
         content: _SyntaxNode_t.base.as(Type.array),

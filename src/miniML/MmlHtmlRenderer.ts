@@ -96,6 +96,10 @@ export class MmlHtmlRenderer {
         }
     }
 
+    protected _renderCodeBlock(node: SyntaxNode.CodeBlock) {
+        return ` <pre><code${node.lang != null ? ` class="language-${node.lang}"` : ""}>${escapeHTML(node.content)}</code></pre>`
+    }
+
     public render(node: SyntaxNode): string {
         if (node.kind == "text") {
             return this._renderText(node)
@@ -105,6 +109,8 @@ export class MmlHtmlRenderer {
             return this._renderObject(node)
         } else if (node.kind == "segment") {
             return this._renderSegment(node)
+        } else if (node.kind == "code-block") {
+            return this._renderCodeBlock(node)
         } else unreachable()
     }
 }
