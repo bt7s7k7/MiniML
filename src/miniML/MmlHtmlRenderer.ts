@@ -45,7 +45,7 @@ export class MmlHtmlRenderer {
     }
 
     protected _renderText(node: SyntaxNode.Text) {
-        return " " + escapeHTML(node.value)
+        return " " + escapeHTML(node.value).replace(/\n/g, "<br>")
     }
 
     protected _renderSpan(node: SyntaxNode.Span) {
