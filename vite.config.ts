@@ -3,6 +3,7 @@ import vueJsx from "@vitejs/plugin-vue-jsx"
 import * as dotenv from "dotenv"
 import { join } from "path"
 import { defineConfig } from "vite"
+import { VitePlatformPlugin } from "./src/vitePlatform/VitePlatformPlugin"
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
@@ -10,7 +11,7 @@ export default defineConfig(() => {
     dotenv.config({ path: join(__dirname, ".env") })
 
     return {
-        plugins: [vue(), vueJsx()],
+        plugins: [vue(), vueJsx(), VitePlatformPlugin()],
         resolve: {
             preserveSymlinks: true
         },
