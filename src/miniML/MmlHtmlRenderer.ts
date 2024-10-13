@@ -1,5 +1,11 @@
+import { NOOP } from "../comTypes/const"
 import { escapeHTML, joinIterable, unreachable } from "../comTypes/util"
 import { SyntaxNode } from "./SyntaxNode"
+
+function _toPx(v: number) {
+    if (v == 0) return v + ""
+    return v + "px"
+}
 
 export class MmlHtmlRenderer {
     protected _renderContent(nodes: SyntaxNode[]) {
@@ -34,10 +40,21 @@ export class MmlHtmlRenderer {
 
             attributes ??= new Map()
             if (node.color.startsWith("#")) {
-                attributes.set("style", `color:${node.color}`)
+                attributes.set("style", (attributes.get("style") ?? "") + `;color:${node.color}`)
             } else {
                 const existingClass = attributes.get("class")
                 attributes.set("class", existingClass ? existingClass + " " + node.color : node.color)
+            }
+        }
+
+        for (const [type, prop, format] of [
+            ["align", "text-align", NOOP],
+            ["width", "width", _toPx],
+            ["height", "height", _toPx],
+        ] as [keyof SyntaxNode.Format, string, (v: any) => any][]) {
+            if (node[type] != null) {
+                attributes ??= new Map()
+                attributes.set("style", (attributes.get("style") ?? "") + `;${prop}:${format(node[type])}`)
             }
         }
 

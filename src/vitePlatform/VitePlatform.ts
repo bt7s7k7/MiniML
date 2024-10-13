@@ -94,7 +94,7 @@ export namespace VitePlatform {
 
     export type RequestData = Type.Extract<Values<typeof _requestTypes>>
 
-    export const RequestData_t = Type.byKeyUnion<RequestData, "kind">("RequestData", "kind", _requestTypes)
+    export const RequestData_t = Type.byKeyUnion<RequestData, "kind">("RequestData", "kind", _requestTypes, null!)
 
     export const Request_t = Type.object({
         id: Type.number,

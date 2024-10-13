@@ -1,4 +1,4 @@
-import { Values } from "../comTypes/types"
+import { FilterBy, Values } from "../comTypes/types"
 import { Struct } from "../struct/Struct"
 import { Deserializer, Type } from "../struct/Type"
 
@@ -28,26 +28,44 @@ const _SyntaxNode_t = new Struct.PolymorphicSerializer("SyntaxNode")
 export const SyntaxNode_t = _SyntaxNode_t.base as Type<SyntaxNode>
 
 const _FORMAT_PROPS = {
-    modifier: Type.enum("bold", "italics", "code").as(Type.nullable),
-    color: ColorModifier_t.as(Type.nullable),
-    classList: Type.string.as(Type.array).as(Type.nullable),
-    attributes: Type.string.as(Type.map).as(Type.nullable),
+    modifier: Type.enum("bold", "italics", "code").as(Type.nullable, { skipNullSerialize: true }),
+    color: ColorModifier_t.as(Type.nullable, { skipNullSerialize: true }),
+    classList: Type.string.as(Type.array).as(Type.nullable, { skipNullSerialize: true }),
+    attributes: Type.string.as(Type.map).as(Type.nullable, { skipNullSerialize: true }),
+    align: Type.enum("left", "center", "right").as(Type.nullable, { skipNullSerialize: true }),
+    width: Type.number.as(Type.nullable, { skipNullSerialize: true }),
+    height: Type.number.as(Type.nullable, { skipNullSerialize: true }),
 }
 
+export abstract class AbstractSyntaxNode {
+    protected _metadata: Map<string, any> | null = null
+
+    public setMetadata<T>(name: SyntaxNode.Metadata<T>, value: T) {
+        (this._metadata ??= new Map()).set(name, value)
+    }
+
+    public getMetadata<T>(name: SyntaxNode.Metadata<T>): T | null {
+        if (this._metadata == null) return null
+        return this._metadata.get(name) ?? null
+    }
+}
 
 export namespace SyntaxNode {
+    declare const _METADATA: unique symbol
+    export type Metadata<T> = string & { [_METADATA]: T }
+
     export type Format = Type.ResolveObjectType<typeof _FORMAT_PROPS>
 
     export class Text extends Struct.define("Text", {
         value: Type.string
-    }) {
+    }, AbstractSyntaxNode) {
         public readonly kind = "text"
     }
 
     export class Span extends Struct.define("Span", {
         ..._FORMAT_PROPS,
         content: _SyntaxNode_t.base.as(Type.array)
-    }) {
+    }, AbstractSyntaxNode) {
         public readonly kind = "span"
         declare public content: SyntaxNode[]
     }
@@ -55,7 +73,7 @@ export namespace SyntaxNode {
     export class CodeBlock extends Struct.define("CodeBlock", {
         lang: Type.string.as(Type.nullable),
         content: Type.string
-    }) {
+    }, AbstractSyntaxNode) {
         public readonly kind = "code-block"
     }
 
@@ -64,7 +82,7 @@ export namespace SyntaxNode {
         content: _SyntaxNode_t.base.as(Type.array),
         url: Type.string.as(Type.nullable),
         media: Type.boolean.as(Type.nullable)
-    }) {
+    }, AbstractSyntaxNode) {
         public readonly kind = "object"
         declare public content: SyntaxNode[]
     }
@@ -75,12 +93,15 @@ export namespace SyntaxNode {
         ..._FORMAT_PROPS,
         type: Type.enum("p", 1, 2, 3, 4, "ul", "ol", "li", "quote").as(Type.nullable),
         content: _SyntaxNode_t.base.as(Type.array)
-    }) {
+    }, AbstractSyntaxNode) {
         public readonly kind = "segment"
         declare public content: SyntaxNode[]
     }
 
     export type SegmentType = Segment["type"]
+
+    export type NodeWithChildren = FilterBy<SyntaxNode, "content", SyntaxNode[]>
+    export type NodeWithStyle = SyntaxNode.Span | SyntaxNode.Object | SyntaxNode.Object | SyntaxNode.Segment
 }
 
 for (const element of Object.values(SyntaxNode)) {

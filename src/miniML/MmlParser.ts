@@ -1,10 +1,11 @@
 import { GenericParser } from "../comTypes/GenericParser"
 import { isNumber, isWhitespace } from "../comTypes/util"
+import { DeserializationError } from "../struct/Type"
 import { SyntaxNode } from "./SyntaxNode"
 
 function _isSpecialChar(v: string, i: number) {
     const c = v[i]
-    return c == "*" || c == "_" || c == "\\" || c == "`" || c == "\n" || c == "!" || c == "[" || c == "]"
+    return c == "*" || c == "_" || c == "\\" || c == "`" || c == "\n" || c == "!" || c == "[" || c == "]" || c == "}"
 }
 
 function _isAttrTerminator(v: string, i: number) {
@@ -15,12 +16,67 @@ function _isIndent(v: string, i: number) {
     return v[i] == " " || v[i] == "\t"
 }
 
+function _isStyleFiller(v: string, i: number) {
+    return v[i] == ";" || isWhitespace(v, i)
+}
+
 export interface SegmentHistory {
     indent: number
     kind: SyntaxNode.SegmentType
 }
 
 export class MmlParser extends GenericParser {
+    protected _parseInlineCssProperty(name: string, value: string, container: SyntaxNode.NodeWithStyle | null): SyntaxNode.NodeWithStyle | null {
+        if (name == "color") {
+            if (value.startsWith("#")) {
+                container ??= new SyntaxNode.Span({ content: [] })
+                container.color = value as typeof container.color
+                return container
+            }
+        }
+
+        if (name == "text-align") {
+            try {
+                const alignValue = SyntaxNode.Span.baseType.props.align.verify(value)
+                container ??= new SyntaxNode.Span({ content: [] })
+                container.align = alignValue
+                return container
+            } catch (err) {
+                if (err instanceof DeserializationError) return container
+                throw err
+            }
+        }
+
+        if (name == "width" || name == "height") {
+            const number = parseInt(value)
+            if (!isNaN(number)) {
+                container ??= new SyntaxNode.Span({ content: [] })
+                container[name] = number
+                return container
+            }
+        }
+
+        return container
+    }
+
+    public parseInlineCss<T extends SyntaxNode.NodeWithStyle>(container: T | null) {
+        while (!this.isDone()) {
+            if (this.consume("\"")) {
+                return container
+            }
+
+            this.skipWhile(_isStyleFiller)
+            const propName = this.readUntil(":")
+            this.index++
+            if (this.isDone()) break
+            const propValue = this.readUntil(";")
+
+            container = this._parseInlineCssProperty(propName, propValue, container) as typeof container
+        }
+
+        return container
+    }
+
     public parseFragment(term: string | null, result: SyntaxNode[] = []) {
         while (!this.isDone()) {
             const text = this.readUntil(_isSpecialChar)
