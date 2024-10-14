@@ -1,9 +1,18 @@
 import vue from "@vitejs/plugin-vue"
 import vueJsx from "@vitejs/plugin-vue-jsx"
 import * as dotenv from "dotenv"
-import { join } from "path"
-import { defineConfig } from "vite"
+import { rm, symlink } from "fs/promises"
+import { join, resolve } from "path"
+import { defineConfig, Plugin } from "vite"
 import { VitePlatformPlugin } from "./src/vitePlatform/VitePlatformPlugin"
+
+const _LATEX_ASSETS: Plugin = {
+    name: "latex-assets",
+    async buildStart(options) {
+        await rm("./public/latex", { recursive: true, force: true })
+        await symlink(resolve("./node_modules/latex.js/dist"), "./public/latex", "junction")
+    },
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
@@ -11,7 +20,7 @@ export default defineConfig(() => {
     dotenv.config({ path: join(__dirname, ".env") })
 
     return {
-        plugins: [vue(), vueJsx(), VitePlatformPlugin()],
+        plugins: [vue(), vueJsx(), VitePlatformPlugin(), _LATEX_ASSETS],
         resolve: {
             preserveSymlinks: true
         },

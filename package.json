@@ -25,6 +25,7 @@
         "@mdi/js": "^7.2.96",
         "@types/codemirror": "5",
         "codemirror": "5",
+        "latex.js": "^0.12.6",
         "vue": "^3.3.4",
         "vue-router": "^4.2.4"
     }

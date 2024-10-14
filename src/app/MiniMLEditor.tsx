@@ -1,17 +1,24 @@
+import { mdiArrowRight } from "@mdi/js"
 import "codemirror/mode/htmlmixed/htmlmixed.js"
 import "codemirror/mode/markdown/markdown.js"
 import { defineComponent, watch } from "vue"
-import { cloneWithout, unreachable } from "../comTypes/util"
+import { cloneWithout, escapeHTML, unreachable } from "../comTypes/util"
+import { Editor } from "../editor/Editor"
 import { EditorView } from "../editor/EditorView"
 import { EditorState } from "../editor/useEditorState"
 import { MmlHtmlRenderer } from "../miniML/MmlHtmlRenderer"
 import { MmlParser } from "../miniML/MmlParser"
 import { AbstractSyntaxNode } from "../miniML/SyntaxNode"
 import { HtmlImporter } from "../mmlHtmlImporter/HtmlImporter"
+import { LaTeXExporter } from "../mmlLaTeXExporter.ts/LaTeXExporter"
 import { DescriptionFormatter } from "../prettyPrint/DescriptionFormatter"
 import { inspect } from "../prettyPrint/inspect"
 import { LogMarker } from "../prettyPrint/ObjectDescription"
+import { Icon } from "../vue3gui/Icon"
 import { Tabs, useTabs } from "../vue3gui/Tabs"
+// @ts-ignore
+import { HtmlGenerator, parse } from "latex.js"
+import { MountNode } from "../vue3gui/MountNode"
 
 // @ts-ignore
 AbstractSyntaxNode.prototype[LogMarker.CUSTOM] = function (this: any) {
@@ -27,15 +34,27 @@ AbstractSyntaxNode.prototype[LogMarker.CUSTOM] = function (this: any) {
 
 
 class _MmlEditorState extends EditorState {
+    public preview: HTMLElement | string | null = null
     public output: string | null = null
     public ast: string | null = null
     public importType: "md" | "html" = "md"
+    public exportType: "html" | "latex" = "html"
 
     public getOutput(): EditorState.OutputTab[] {
         return [
             {
-                label: "Output", name: "output",
-                content: () => this.output != null ? <div class="mml-document" innerHTML={this.output}></div> : <div></div>
+                label: "Preview", name: "output",
+                content: () => this.preview != null ? (
+                    typeof this.preview == "string" ? (
+                        <div class="mml-document" innerHTML={this.preview}></div>
+                    ) : (
+                        <MountNode node={this.preview} />
+                    )
+                ) : <div></div>
+            },
+            {
+                label: "Output", name: "raw",
+                content: () => <Editor content={this.output ?? ""} config={{ readOnly: true }} mode={this.exportType == "html" ? "htmlmixed" : undefined} class="absolute-fill" />
             },
             {
                 label: "AST", name: "ast",
@@ -46,22 +65,47 @@ class _MmlEditorState extends EditorState {
 
     protected _compile(code: string): void {
         this.output = null
-        let document
+        this.preview = null
+        this.ast = null
+
+        let mlDocument
 
         if (this.importType == "md") {
-            document = new MmlParser(code).parseDocument()
+            mlDocument = new MmlParser(code).parseDocument()
         } else if (this.importType == "html") {
-            document = new HtmlImporter().importHtml(code)
+            mlDocument = new HtmlImporter().importHtml(code)
         } else unreachable()
 
-        this.ast = inspect(document, { color: DescriptionFormatter.htmlColor })
-        const renderer = new MmlHtmlRenderer()
-        this.output = renderer.render(document)
+        this.ast = inspect(mlDocument, { color: DescriptionFormatter.htmlColor })
+        if (this.exportType == "html") {
+            const renderer = new MmlHtmlRenderer()
+            this.preview = this.output = renderer.render(mlDocument)
+        } else if (this.exportType == "latex") {
+            const renderer = new LaTeXExporter()
+            this.output = renderer.exportDocument(mlDocument)
+
+            try {
+                const preview = parse(this.output, { generator: new HtmlGenerator({ hyphenate: false }) })
+                const previewContainer = document.createElement("div")
+                previewContainer.appendChild(preview.domFragment())
+                this.preview = previewContainer
+            } catch (err: any) {
+                // eslint-disable-next-line no-console
+                console.error(err)
+                this.preview = `<div class="text-danger monospace">${escapeHTML(err.message)}</div>`
+            }
+        }
         this.ready = true
         // eslint-disable-next-line no-console
         console.log(this.output)
     }
 }
+
+const LATEX_RESOURCES = `
+    <link rel="stylesheet" type="text/css" href="/latex/css/katex.css">
+    <link rel="stylesheet" type="text/css" href="/latex/css/article.css">
+    <script src="/latex/js/base.js"></script>
+`
 
 export const MiniMLEditor = (defineComponent({
     name: "MiniMLEditor",
@@ -80,9 +124,24 @@ export const MiniMLEditor = (defineComponent({
             state.compile(state.code.value)
         })
 
+        const exportType = useTabs({
+            "html": "HTML",
+            "latex": "LaTeX",
+        })
+
+        state.exportType = exportType.selected = localStorage.getItem("mini-ml-editor:export-type") as null ?? "html"
+        watch(() => exportType.selected, selected => {
+            localStorage.setItem("mini-ml-editor:export-type", selected)
+            state.exportType = selected
+            state.compile(state.code.value)
+        })
+
         return () => (
-            <EditorView state={state} class="flex-fill" mode={importType.selected == "md" ? "markdown" : "htmlmixed"} localStorageId="mini-ml-editor" root>
+            <EditorView state={state} class="flex-fill" toolbarClass="center-cross" mode={importType.selected == "md" ? "markdown" : "htmlmixed"} localStorageId="mini-ml-editor" root>
                 <Tabs tabs={importType} />
+                <Icon icon={mdiArrowRight} class="mx-2" />
+                <Tabs tabs={exportType} />
+                {exportType.selected == "latex" && <div innerHTML={LATEX_RESOURCES}></div>}
             </EditorView>
         )
     }

@@ -6,6 +6,8 @@ dist-ssr
 tsconfig.tsbuildinfo
 yarn-error.log
 
+/public/latex
+
 # UCPEM
 ucpem_ports
 /.vscode
