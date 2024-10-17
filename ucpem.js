@@ -4,12 +4,28 @@ const { rm } = require("fs/promises")
 const { join } = require("path")
 const { project, github, constants } = require("ucpem")
 
-project.prefix("src").res("miniML",
+project.prefix("src").use(
     github("bt7s7k7/Vue3GUI").res("vue3gui"),
-    github("bt7s7k7/Struct").res("struct"),
-    github("bt7s7k7/CommonTypes").res("comTypes"),
     github("bt7s7k7/Apsides").res("editor"),
     github("bt7s7k7/LogLib").res("prettyPrint"),
+)
+
+project.prefix("src").res("miniML",
+    github("bt7s7k7/CommonTypes").res("comTypes"),
+)
+
+project.prefix("src").res("mmlHtmlImporter",
+    project.ref("miniML")
+)
+
+project.prefix("src").res("mmlLaTeXExporter",
+    project.ref("miniML")
+)
+
+project.prefix("src").res("mmlConvert",
+    project.ref("mmlLaTeXExporter"),
+    project.ref("mmlHtmlImporter"),
+    github("bt7s7k7/Struct").res("struct"),
 )
 
 project.script("build", async () => {

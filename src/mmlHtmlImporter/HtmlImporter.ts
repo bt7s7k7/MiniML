@@ -1,8 +1,6 @@
 import { MmlParser } from "../miniML/MmlParser"
 import { SyntaxNode } from "../miniML/SyntaxNode"
 
-
-
 export class HtmlImporter {
     public importStyle<T extends SyntaxNode.NodeWithStyle = SyntaxNode.Span>(element: HTMLElement, container: T | null) {
         const styleAttribute = element.getAttribute("style")

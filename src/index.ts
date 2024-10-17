@@ -1,24 +1,9 @@
 import { readFile, writeFile } from "fs/promises"
 import { basename, dirname, extname, join } from "path"
 import { Cli } from "./cli/Cli"
-import { asError, isUpperCase, unreachable } from "./comTypes/util"
-import { MmlHtmlRenderer } from "./miniML/MmlHtmlRenderer"
-import { MmlParser } from "./miniML/MmlParser"
-import { HtmlImporter } from "./mmlHtmlImporter/HtmlImporter"
-import { LaTeXExporter } from "./mmlLaTeXExporter.ts/LaTeXExporter"
+import { asError } from "./comTypes/util"
+import { mmlConvert } from "./mmlConvert/mmlConvert"
 import { Type } from "./struct/Type"
-
-async function initDOM() {
-    const { JSDOM } = await import("jsdom")
-    const jsdom = new JSDOM()
-    for (const key of ["document", "Text", "HTMLElement"]) {
-        if (key == "document" || isUpperCase(key, 0)) {
-            // @ts-ignore
-            globalThis[key] = jsdom.window[key]
-        }
-
-    }
-}
 
 const cli = new Cli("mini-ml")
     .addOption({
@@ -56,17 +41,7 @@ const cli = new Cli("mini-ml")
                 throw inputText
             }
 
-            const document = input == "md" ? (
-                new MmlParser(inputText).parseDocument()
-            ) : input == "html" ? (
-                await initDOM(), new HtmlImporter().importHtml(inputText)
-            ) : unreachable()
-
-            const outputText = output == "html" ? (
-                new MmlHtmlRenderer().render(document)
-            ) : output == "latex" ? (
-                new LaTeXExporter().exportDocument(document)
-            ) : unreachable()
+            const outputText = await mmlConvert(inputText, input, output)
 
             await writeFile(destPath, outputText)
         },
