@@ -3,6 +3,7 @@
     "version": "0.0.0",
     "private": true,
     "devDependencies": {
+        "@types/jsdom": "^21.1.7",
         "@types/node": "^22.7.5",
         "@typescript-eslint/eslint-plugin": "^6.0.0",
         "@typescript-eslint/parser": "^6.0.0",
@@ -27,6 +28,7 @@
         "@mdi/js": "^7.2.96",
         "@types/codemirror": "5",
         "codemirror": "5",
+        "jsdom": "^25.0.1",
         "latex.js": "^0.12.6",
         "vue": "^3.3.4",
         "vue-router": "^4.2.4"
