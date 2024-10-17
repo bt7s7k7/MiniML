@@ -1,5 +1,6 @@
 import { mdiArrowRight } from "@mdi/js"
 import "codemirror/mode/htmlmixed/htmlmixed.js"
+import "codemirror/mode/javascript/javascript.js"
 import "codemirror/mode/markdown/markdown.js"
 import { defineComponent, watch } from "vue"
 import { cloneWithout, escapeHTML, unreachable } from "../comTypes/util"
@@ -18,6 +19,11 @@ import { Icon } from "../vue3gui/Icon"
 import { Tabs, useTabs } from "../vue3gui/Tabs"
 // @ts-ignore
 import { HtmlGenerator, parse } from "latex.js"
+import { h } from "vue"
+import { RouterLink } from "vue-router"
+import { Optional } from "../comTypes/Optional"
+import { MmlVueExporter } from "../miniML/MmlVueExporter"
+import { Button } from "../vue3gui/Button"
 import { MountNode } from "../vue3gui/MountNode"
 
 // @ts-ignore
@@ -34,11 +40,11 @@ AbstractSyntaxNode.prototype[LogMarker.CUSTOM] = function (this: any) {
 
 
 class _MmlEditorState extends EditorState {
-    public preview: HTMLElement | string | null = null
+    public preview: HTMLElement | (() => any) | string | null = null
     public output: string | null = null
     public ast: string | null = null
     public importType: "md" | "html" = "md"
-    public exportType: "html" | "latex" = "html"
+    public exportType: "html" | "latex" | "vue" = "html"
 
     public getOutput(): EditorState.OutputTab[] {
         return [
@@ -47,6 +53,12 @@ class _MmlEditorState extends EditorState {
                 content: () => this.preview != null ? (
                     typeof this.preview == "string" ? (
                         <div class="mml-document" innerHTML={this.preview}></div>
+                    ) : typeof this.preview == "function" ? (
+                        <div class="mml-document">{
+                            Optional.pcall(() => h(this.preview as typeof this.preview & Function))
+                                // eslint-disable-next-line no-console
+                                .else(error => (console.error(error), null)).unwrap()
+                        }</div>
                     ) : (
                         <MountNode node={this.preview} />
                     )
@@ -54,7 +66,11 @@ class _MmlEditorState extends EditorState {
             },
             {
                 label: "Output", name: "raw",
-                content: () => <Editor content={this.output ?? ""} config={{ readOnly: true }} mode={this.exportType == "html" ? "htmlmixed" : undefined} class="absolute-fill" />
+                content: () => <Editor
+                    content={this.output ?? ""} config={{ readOnly: true }}
+                    mode={this.exportType == "html" ? "htmlmixed" : this.exportType == "vue" ? "javascript" : undefined}
+                    class="absolute-fill"
+                />
             },
             {
                 label: "AST", name: "ast",
@@ -80,6 +96,19 @@ class _MmlEditorState extends EditorState {
         if (this.exportType == "html") {
             const renderer = new MmlHtmlRenderer()
             this.preview = this.output = renderer.render(mlDocument)
+        } else if (this.exportType == "vue") {
+            const exporter = new MmlVueExporter()
+            exporter.addAllowedComponent("RouterLink", "Button")
+            const output = exporter.render(mlDocument)
+            this.output = output
+
+            try {
+                this.preview = new Function("return " + output)()({ RouterLink, Button, h })
+            } catch (err: any) {
+                // eslint-disable-next-line no-console
+                console.error(err)
+                this.preview = `<div class="text-danger monospace">${escapeHTML(err.message)}</div>`
+            }
         } else if (this.exportType == "latex") {
             const renderer = new LaTeXExporter()
             this.output = renderer.exportDocument(mlDocument)
@@ -96,8 +125,6 @@ class _MmlEditorState extends EditorState {
             }
         }
         this.ready = true
-        // eslint-disable-next-line no-console
-        console.log(this.output)
     }
 }
 
@@ -127,6 +154,7 @@ export const MiniMLEditor = (defineComponent({
         const exportType = useTabs({
             "html": "HTML",
             "latex": "LaTeX",
+            "vue": "Vue",
         })
 
         state.exportType = exportType.selected = localStorage.getItem("mini-ml-editor:export-type") as null ?? "html"

@@ -54,7 +54,7 @@ export namespace SyntaxNode {
     declare const _METADATA: unique symbol
     export type Metadata<T> = string & { [_METADATA]: T }
 
-    export type Format = Type.ResolveObjectType<typeof _FORMAT_PROPS>
+    export type NodeWithFormat = Type.ResolveObjectType<typeof _FORMAT_PROPS>
 
     export class Text extends Struct.define("Text", {
         value: Type.string

@@ -7,12 +7,12 @@ function _toPx(v: number) {
     return v + "px"
 }
 
-export class MmlHtmlRenderer {
+export abstract class MmlRenderer {
     protected _renderContent(nodes: SyntaxNode[]) {
-        return nodes.map((node) => this.render(node)).join("")
+        return nodes.map((node) => this._renderNode(node))
     }
 
-    protected _renderFormat(node: SyntaxNode.Format, attributes: Map<string, string> | null = null) {
+    protected _normalizeAttributes(node: SyntaxNode.NodeWithFormat, attributes: Map<string, string> | null = null) {
         if (node.attributes) {
             if (attributes != null) {
                 attributes = new Map(joinIterable(node.attributes, attributes))
@@ -51,19 +51,23 @@ export class MmlHtmlRenderer {
             ["align", "text-align", NOOP],
             ["width", "width", _toPx],
             ["height", "height", _toPx],
-        ] as [keyof SyntaxNode.Format, string, (v: any) => any][]) {
+        ] as [keyof SyntaxNode.NodeWithFormat, string, (v: any) => any][]) {
             if (node[type] != null) {
                 attributes ??= new Map()
                 attributes.set("style", (attributes.get("style") ?? "") + `;${prop}:${format(node[type])}`)
             }
         }
 
-        return attributes == null || attributes.size == 0 ? "" : " " + [...attributes].map(v => `${v[0]}="${v[1]}"`).join(" ")
+        return attributes
     }
 
-    protected _renderText(node: SyntaxNode.Text) {
-        return " " + escapeHTML(node.value).replace(/\n/g, "<br>")
-    }
+    protected abstract _renderAttributes(attributes?: Map<string, string> | null): string
+
+    protected abstract _renderText(node: string): string
+
+    protected abstract _renderElement(element: string, attributes: Map<string, string> | null, content: SyntaxNode[]): string
+
+    protected abstract _renderElementRaw(element: string, attributes: Map<string, string> | null, content: any): string
 
     protected _renderSpan(node: SyntaxNode.Span) {
         const element = node.modifier == "bold" ? (
@@ -74,19 +78,19 @@ export class MmlHtmlRenderer {
             "code"
         ) : "span"
 
-        return ` <${element}${this._renderFormat(node)}>${this._renderContent(node.content)}</${element}>`
+        return this._renderElement(element, this._normalizeAttributes(node), node.content)
     }
 
     protected _renderObject(node: SyntaxNode.Object) {
         const element = node.media ? "img" : "a"
         const attr = node.media ? "src" : "href"
 
-        return ` <${element}${this._renderFormat(node, new Map([[attr, node.url!]]))}>${this._renderContent(node.content)}</${element}>`
+        return this._renderElement(element, this._normalizeAttributes(node, new Map([[attr, node.url!]])), node.content)
     }
 
     protected _renderSegment(node: SyntaxNode.Segment) {
-        const format = this._renderFormat(node)
-        if (format != "" || node.type != null) {
+        const format = this._normalizeAttributes(node)
+        if (format != null || node.type != null) {
             const element = node.type == "ol" ? (
                 "ol"
             ) : node.type == "ul" ? (
@@ -107,19 +111,19 @@ export class MmlHtmlRenderer {
                 "h1"
             ) : unreachable()
 
-            return ` <${element}${this._renderFormat(node)}>${this._renderContent(node.content)}</${element}>`
+            return this._renderElement(element, format, node.content)
         } else {
-            return this._renderContent(node.content)
+            return this._renderElement("", null, node.content)
         }
     }
 
     protected _renderCodeBlock(node: SyntaxNode.CodeBlock) {
-        return ` <pre><code${node.lang != null ? ` class="language-${node.lang}"` : ""}>${escapeHTML(node.content)}</code></pre>`
+        return this._renderElementRaw("pre", null, this._renderElementRaw("code", node.lang != null ? new Map([["class", "language-" + node.lang]]) : null, this._renderText(node.content)))
     }
 
-    public render(node: SyntaxNode): string {
+    protected _renderNode(node: SyntaxNode): string {
         if (node.kind == "text") {
-            return this._renderText(node)
+            return this._renderText(node.value)
         } else if (node.kind == "span") {
             return this._renderSpan(node)
         } else if (node.kind == "object") {
@@ -129,5 +133,29 @@ export class MmlHtmlRenderer {
         } else if (node.kind == "code-block") {
             return this._renderCodeBlock(node)
         } else unreachable()
+    }
+
+
+    public render(node: SyntaxNode) {
+        return this._renderNode(node)
+    }
+}
+
+export class MmlHtmlRenderer extends MmlRenderer {
+    protected override _renderAttributes(attributes: Map<string, string> | null = null) {
+        return attributes == null || attributes.size == 0 ? "" : " " + [...attributes].map(v => `${v[0]}="${v[1]}"`).join(" ")
+    }
+
+    protected override _renderText(text: string) {
+        return " " + escapeHTML(text).replace(/\n/g, "<br>")
+    }
+
+    protected override _renderElement(element: string, attributes: Map<string, string> | null, content: SyntaxNode[]): any {
+        if (element == "") return this._renderContent(content).join("")
+        return ` <${element}${this._renderAttributes(attributes)}>${this._renderContent(content).join("")}</${element}>`
+    }
+
+    protected override _renderElementRaw(element: string, attributes: Map<string, string> | null, content: any) {
+        return ` <${element}${this._renderAttributes(attributes)}>${content}</${element}>`
     }
 }
