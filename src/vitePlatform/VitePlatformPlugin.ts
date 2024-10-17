@@ -49,7 +49,7 @@ export function VitePlatformPlugin() {
                     } else if (data.kind == "writeFile") {
                         respond(request, DeferredSerializationValue.prepareSerialization(await fs.writeFile(data.path, data.content), Type.empty))
                     } else if (data.kind == "writeBytes") {
-                        respond(request, DeferredSerializationValue.prepareSerialization(await fs.writeFile(data.path, data.content), Type.empty))
+                        respond(request, DeferredSerializationValue.prepareSerialization(await fs.writeFile(data.path, new Uint8Array(data.content)), Type.empty))
                     } else if (data.kind == "readdir") {
                         respond(request, DeferredSerializationValue.prepareSerialization(await fs.readdir(data.path, { withFileTypes: true }).then((v: any[]) => v.map(v => ({
                             name: v.name,
@@ -61,7 +61,7 @@ export function VitePlatformPlugin() {
                             name: path.basename(data.path),
                             path: path.resolve(data.path),
                             isDirectory: v.isDirectory()
-                        } as Platform.Stats)), Type.empty))
+                        } as Platform.Stats)), Type.passthrough()))
                     } else unreachable()
                 } catch (err) {
                     respond(request, new Platform.PlatformError("Internal server error"))

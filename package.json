@@ -3,6 +3,7 @@
     "version": "0.0.0",
     "private": true,
     "devDependencies": {
+        "@types/node": "^22.7.5",
         "@typescript-eslint/eslint-plugin": "^6.0.0",
         "@typescript-eslint/parser": "^6.0.0",
         "@vitejs/plugin-vue": "^4.2.3",
@@ -19,7 +20,8 @@
         "build": "tsc --noEmit --incremental && vite build",
         "serve": "vite preview",
         "lint": "yarn eslint ./",
-        "get-ucpem": "curl -L https://github.com/bt7s7k7/UCPeM/releases/latest/download/ucpem.js -o node_modules/.bin/ucpem"
+        "get-ucpem": "curl -L https://github.com/bt7s7k7/UCPeM/releases/latest/download/ucpem.js -o node_modules/.bin/ucpem",
+        "cli": "ucpem run build && node --inspect --enable-source-maps ./dist/index.mjs"
     },
     "dependencies": {
         "@mdi/js": "^7.2.96",
