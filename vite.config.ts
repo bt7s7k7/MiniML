@@ -4,7 +4,6 @@ import * as dotenv from "dotenv"
 import { rm, symlink } from "fs/promises"
 import { join, resolve } from "path"
 import { defineConfig, Plugin } from "vite"
-import { VitePlatformPlugin } from "./src/vitePlatform/VitePlatformPlugin"
 
 const _LATEX_ASSETS: Plugin = {
     name: "latex-assets",
@@ -20,7 +19,7 @@ export default defineConfig(() => {
     dotenv.config({ path: join(__dirname, ".env") })
 
     return {
-        plugins: [vue(), vueJsx(), VitePlatformPlugin(), _LATEX_ASSETS],
+        plugins: [vue(), vueJsx(), _LATEX_ASSETS],
         resolve: {
             preserveSymlinks: true
         },
