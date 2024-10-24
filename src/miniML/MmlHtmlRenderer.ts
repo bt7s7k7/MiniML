@@ -157,15 +157,15 @@ export class MmlHtmlRenderer extends MmlRenderer {
     }
 
     protected override _renderText(text: string) {
-        return " " + escapeHTML(text).replace(/\n/g, "<br>")
+        return escapeHTML(text).replace(/\n/g, "<br>")
     }
 
     protected override _renderElement(element: string, attributes: Map<string, string> | null, content: SyntaxNode[]): any {
         if (element == "") return this._renderContent(content).join("")
-        return ` <${element}${this._renderAttributes(attributes)}>${this._renderContent(content).join("")}</${element}>`
+        return `<${element}${this._renderAttributes(attributes)}>${this._renderContent(content).join("")}</${element}>`
     }
 
     protected override _renderElementRaw(element: string, attributes: Map<string, string> | null, content: any) {
-        return ` <${element}${this._renderAttributes(attributes)}>${content}</${element}>`
+        return `<${element}${this._renderAttributes(attributes)}>${content}</${element}>`
     }
 }
