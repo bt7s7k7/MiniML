@@ -114,19 +114,6 @@ export class HtmlImporter {
         text = text.trim()
         if (text == "") return null
 
-        if (text.includes("$$EMBED{{")) {
-            const parser = new MmlParser(text)
-            const result = new SyntaxNode.Span({ content: [] })
-            while (!parser.isDone()) {
-                const prefix = parser.readUntil("$$EMBED{{")
-                parser.index += 9
-                if (prefix) result.content.push(new SyntaxNode.Text({ value: prefix }))
-                if (parser.isDone()) break
-                parser.parseFragment("}}$$", result.content)
-            }
-            return result
-        }
-
         return new SyntaxNode.Text({ value: text })
     }
 
@@ -139,7 +126,49 @@ export class HtmlImporter {
             return this.importElement(node)
         }
 
+        if (node instanceof Comment) {
+            const content = node.textContent
+            if (content == null) return null
+            if (content.startsWith("$$EMBED{{") && content.endsWith("}}$$")) {
+                const embedContent = content.slice(9, -4)
+                const parsedEmbed = document.createElement("template")
+                parsedEmbed.innerHTML = embedContent
+                const embedSource = this.flattenIntoText(parsedEmbed.content)
+                const mml = new MmlParser(embedSource)
+                if (embedSource.includes("\n")) {
+                    return mml.parseDocument()
+                } else {
+                    const result = new SyntaxNode.Span({ content: [] })
+                    mml.parseFragment(null, result.content)
+                    return result
+                }
+            }
+        }
+
         return null
+    }
+
+    public flattenIntoText(node: Node) {
+        const result: string[] = []
+        this.flattenNode(node, result)
+        return result.join("")
+    }
+
+    public flattenNode(node: Node, result: string[]) {
+        if (node instanceof Text) {
+            result.push(node.textContent ?? "")
+        } else if (node instanceof HTMLElement || node instanceof DocumentFragment) {
+            if (node instanceof HTMLElement) {
+                if (node.tagName == "BR") {
+                    result.push("\n")
+                    return
+                }
+            }
+
+            for (const child of node.childNodes) {
+                this.flattenNode(child, result)
+            }
+        }
     }
 
     public importDocument(element: HTMLElement | DocumentFragment) {
@@ -154,6 +183,8 @@ export class HtmlImporter {
     public importHtml(html: string) {
         const template = document.createElement("template")
         template.innerHTML = html
+            .replace(/(\$\$EMBED{{)/g, "<!--$1")
+            .replace(/(}}\$\$)/g, "$1-->")
         const element = template.content
         return this.importDocument(element)
     }
