@@ -83,9 +83,19 @@ export abstract class MmlRenderer {
 
     protected _renderObject(node: SyntaxNode.Object) {
         const element = node.media ? "img" : "a"
-        const attr = node.media ? "src" : "href"
 
-        return this._renderElement(element, this._normalizeAttributes(node, new Map([[attr, node.url!]])), node.content)
+        let attrs: Map<string, string> | null = null
+        if (node.url != null) {
+            if (node.media) {
+                attrs = new Map()
+                attrs.set("src", node.url)
+            } else {
+                attrs = new Map()
+                attrs.set("href", node.url)
+            }
+        }
+
+        return this._renderElement(element, this._normalizeAttributes(node, attrs), node.content)
     }
 
     protected _renderSegment(node: SyntaxNode.Segment) {

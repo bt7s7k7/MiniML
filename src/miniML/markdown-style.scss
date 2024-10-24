@@ -38,7 +38,7 @@
     a {
         text-decoration: none;
 
-        &:hover, &:focus-visible {
+        &[href]:hover, &[href]:focus-visible {
             text-decoration: underline;
         }
     }
