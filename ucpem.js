@@ -28,6 +28,11 @@ project.prefix("src").res("mmlConvert",
     github("bt7s7k7/Struct").res("struct"),
 )
 
+project.prefix("src").res("cli",
+    github("bt7s7k7/Struct").res("struct"),
+    github("bt7s7k7/CommonTypes").res("comTypes"),
+)
+
 project.script("build", async () => {
     const { build } = require("esbuild")
 
