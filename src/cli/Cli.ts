@@ -71,14 +71,14 @@ export class Cli {
                 ...{ [P in keyof TParams]: Type.Extract<TParams[P][1]> },
                 { [P in keyof TOptions]: Type.Extract<TOptions[P]> }
             ]
-        ) => Promise<void>
-    }
+        ) => Promise<number | undefined | void>
+    },
     ) {
         const impl: Cli.CommandImpl = {
             desc: options.desc,
             options: options.options == null ? null : new Map(Object.entries(options.options)),
             params: options.params ?? null,
-            callback: options.callback as any
+            callback: options.callback as any,
         }
         this._root.makeCommand(options.name.split(" "), 0, impl)
         return this
@@ -99,8 +99,9 @@ export class Cli {
     }
 
     public async execute(args: string[]) {
-        const foundCommand = await this._root.execute(args, 0)
-        if (foundCommand) return 0
+        const exitCode = await this._root.execute(args, 0)
+        if (exitCode != null) return exitCode
+
         console.log("Command not found")
         console.log("")
         this.printHelp()
@@ -112,7 +113,7 @@ export class Cli {
     }
 
     constructor(
-        public readonly exeName: string
+        public readonly exeName: string,
     ) { }
 }
 
@@ -121,7 +122,7 @@ export namespace Cli {
         desc: string
         params: readonly [string, Type<any>][] | null
         options: Map<string, Type<any>> | null
-        callback(args: any[]): Promise<void>
+        callback(args: any[]): Promise<number | undefined | void>
     }
 
     export class Command {
@@ -146,13 +147,13 @@ export namespace Cli {
                 return
             }
 
-            const childCommand = ensureKey(this.children, name[index], () => new Command(name[index], name.slice(0, index + 1).join(" ")))
+            const childCommand = ensureKey(this.children, name[index], () => new Command(name[index], name.slice(0, index + 1).join(" ") || ":default:"))
             childCommand.makeCommand(name, index + 1, impl)
         }
 
-        public async execute(args: string[], index: number): Promise<boolean> {
+        public async execute(args: string[], index: number): Promise<number | null> {
             if (args.length + 1 <= index) {
-                return false
+                return null
             }
 
             const name = args[index]
@@ -162,7 +163,11 @@ export namespace Cli {
             }
 
             if (this._impl == null) {
-                return false
+                const implicit = this.children.get("")
+                if (implicit) {
+                    return implicit.execute(args, index)
+                }
+                return null
             }
 
             const impl = this._impl
@@ -240,12 +245,12 @@ export namespace Cli {
                 }
                 console.log("")
                 console.log("Expected parameters: " + this.getHelpString())
-                return true
+                return 1
             }
 
             // @ts-ignore
-            await impl.callback(...unnamedArguments, namedArguments)
-            return true
+            const exitCode = await impl.callback(...unnamedArguments, namedArguments)
+            return exitCode ?? 0
         }
 
         public getHelpString() {
@@ -270,7 +275,6 @@ export namespace Cli {
         constructor(
             public readonly name: string,
             public readonly fullName: string,
-
         ) { }
     }
 }
