@@ -139,10 +139,17 @@ export class LaTeXExporter {
 
         if (node.kind == "object" && node.type == "raw") {
             const block = node.attributes?.get("pragma-block") != null
+            const star = node.attributes?.get("pragma-star") != null
+
+            let name = node.value
+            if (star) {
+                name = name + "*"
+            }
+
             if (block) {
-                this.result.push(`\\begin{${node.value}}`)
+                this.result.push(`\\begin{${name}}`)
             } else {
-                this.result.push("\\" + node.value)
+                this.result.push("\\" + name)
             }
 
             const attributes = node.attributes == null ? null : [...node.attributes].filter(([key, value]) => !key.startsWith("pragma-"))
@@ -155,9 +162,11 @@ export class LaTeXExporter {
                 this.exportNodeContent(node)
                 if (!block) this.result.push("}")
             }
+
             if (block) {
-                this.result.push(`\\end{${node.value}}`)
+                this.result.push(`\\end{${name}}`)
             }
+
             return
         }
 
