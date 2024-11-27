@@ -80,8 +80,8 @@ export namespace SyntaxNode {
     export class Object extends Struct.define("Object", {
         ..._FORMAT_PROPS,
         content: _SyntaxNode_t.base.as(Type.array),
-        url: Type.string.as(Type.nullable),
-        media: Type.boolean.as(Type.nullable)
+        value: Type.string.as(Type.nullable),
+        type: Type.enum("link", "media", "raw")
     }, AbstractSyntaxNode) {
         public readonly kind = "object"
         declare public content: SyntaxNode[]

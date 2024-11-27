@@ -38,7 +38,6 @@ AbstractSyntaxNode.prototype[LogMarker.CUSTOM] = function (this: any) {
     return result
 }
 
-
 class _MmlEditorState extends EditorState {
     public preview: HTMLElement | (() => any) | string | null = null
     public output: string | null = null

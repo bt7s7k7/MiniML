@@ -24,7 +24,6 @@ export class MmlVueExporter extends MmlRenderer {
     protected override _renderElement(element: string, attributes: Map<string, string> | null, content: SyntaxNode[]): string {
         if (element == "") return content.length == 0 ? "[]" : content.length == 1 ? this._renderNode(content[0]) : "[" + this._renderContent(content).join(", ") + "]"
 
-
         if (isUpperCase(element, 0)) {
             if (this.allowedComponents.has(element)) {
                 const contentString = content.length == 0 ? "null" : content.length == 1 ? this._renderNode(content[0]) : this._renderContent(content).join(", ")
@@ -53,10 +52,10 @@ export class MmlVueExporter extends MmlRenderer {
     }
 
     protected override _renderObject(node: SyntaxNode.Object): string {
-        if (!node.media && node.url != null) {
-            const isRelative = !node.url.match(/^[a-z]+:\/\//)
+        if (!node.type && node.value != null) {
+            const isRelative = !node.value.match(/^[a-z]+:\/\//)
             if (isRelative) {
-                return this._renderElement("RouterLink", this._normalizeAttributes(node, new Map([["to", node.url]])), node.content)
+                return this._renderElement("RouterLink", this._normalizeAttributes(node, new Map([["to", node.value]])), node.content)
             }
         }
         return super._renderObject(node)

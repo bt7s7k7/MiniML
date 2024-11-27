@@ -82,16 +82,22 @@ export abstract class MmlRenderer {
     }
 
     protected _renderObject(node: SyntaxNode.Object) {
-        const element = node.media ? "img" : "a"
+        const element = node.type == "media" ? (
+            "img"
+        ) : node.type == "link" ? (
+            "a"
+        ) : node.type == "raw" ? (
+            node.value ?? "span"
+        ) : unreachable()
 
         let attrs: Map<string, string> | null = null
-        if (node.url != null) {
-            if (node.media) {
+        if (node.value != null) {
+            if (node.type == "media") {
                 attrs = new Map()
-                attrs.set("src", node.url)
-            } else {
+                attrs.set("src", node.value)
+            } else if (node.type == "link") {
                 attrs = new Map()
-                attrs.set("href", node.url)
+                attrs.set("href", node.value)
             }
         }
 

@@ -2,10 +2,15 @@ import { MmlParser } from "../miniML/MmlParser"
 import { SyntaxNode } from "../miniML/SyntaxNode"
 
 export class HtmlImporter {
+    protected readonly _embedParser: HtmlImporter.InlineCssParser
+
+    public get widgets() { return this._embedParser.widgets }
+    public set widgets(value) { this._embedParser.widgets = value }
+
     public importStyle<T extends SyntaxNode.NodeWithStyle = SyntaxNode.Span>(element: HTMLElement, container: T | null) {
         const styleAttribute = element.getAttribute("style")
         if (styleAttribute) {
-            return new HtmlImporter.InlineCssParser(styleAttribute).parseInlineCss(container)
+            return this._embedParser.clone(styleAttribute).parseInlineCss(container)
         }
 
         return container
@@ -86,9 +91,9 @@ export class HtmlImporter {
         } else if (element.tagName == "P") {
             syntax = new SyntaxNode.Segment({ type: "p", content: [] })
         } else if (element.tagName == "IMG") {
-            syntax = new SyntaxNode.Object({ media: true, url: (element as HTMLImageElement).src, content: [] })
+            syntax = new SyntaxNode.Object({ type: "media", value: (element as HTMLImageElement).src, content: [] })
         } else if (element.tagName == "A") {
-            syntax = new SyntaxNode.Object({ url: (element as HTMLAnchorElement).href, content: [] })
+            syntax = new SyntaxNode.Object({ type: "link", value: (element as HTMLAnchorElement).href, content: [] })
         } else if (element.tagName == "BR") {
             return new SyntaxNode.Text({ value: "\n" })
         }
@@ -134,7 +139,7 @@ export class HtmlImporter {
                 const parsedEmbed = document.createElement("template")
                 parsedEmbed.innerHTML = embedContent
                 const embedSource = this.flattenIntoText(parsedEmbed.content)
-                const mml = new MmlParser(embedSource)
+                const mml = this._embedParser.clone(embedSource)
                 if (embedSource.includes("\n")) {
                     return mml.parseDocument()
                 } else {
@@ -187,6 +192,12 @@ export class HtmlImporter {
             .replace(/(}}\$\$)/g, "$1-->")
         const element = template.content
         return this.importDocument(element)
+    }
+
+    constructor(
+        options?: ConstructorParameters<typeof MmlParser>[1]
+    ) {
+        this._embedParser = new HtmlImporter.InlineCssParser("", options)
     }
 }
 

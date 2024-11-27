@@ -1,15 +1,22 @@
 import { GenericParser } from "../comTypes/GenericParser"
-import { isNumber, isWhitespace } from "../comTypes/util"
+import { Constructor } from "../comTypes/types"
+import { isNumber, isUpperCase, isWhitespace, isWord } from "../comTypes/util"
+import { Struct } from "../struct/Struct"
 import { DeserializationError } from "../struct/Type"
+import { MmlWidget } from "./MmlWidget"
 import { SyntaxNode } from "./SyntaxNode"
 
 function _isSpecialChar(v: string, i: number) {
     const c = v[i]
-    return c == "*" || c == "_" || c == "\\" || c == "`" || c == "\n" || c == "!" || c == "[" || c == "]" || c == "}"
+    return c == "*" || c == "_" || c == "\\" || c == "`" || c == "\n" || c == "!" || c == "[" || c == "]" || c == "}" || c == "<"
 }
 
 function _isAttrTerminator(v: string, i: number) {
-    return v[i] == "}" || isWhitespace(v, i)
+    return v[i] == "}" || isWhitespace(v, i) || v[i] == ">" || v[i] == "/"
+}
+
+function _isAttrNameTerminator(v: string, i: number) {
+    return v[i] == "=" || _isAttrTerminator(v, i)
 }
 
 function _isIndent(v: string, i: number) {
@@ -20,12 +27,18 @@ function _isStyleFiller(v: string, i: number) {
     return v[i] == ";" || isWhitespace(v, i)
 }
 
+function _isHtmlElementName(v: string, i: number) {
+    return v[i] == "-" || isWord(v, i) || v[i] == ":"
+}
+
 export interface SegmentHistory {
     indent: number
     kind: SyntaxNode.SegmentType
 }
 
 export class MmlParser extends GenericParser {
+    public widgets = new Struct.PolymorphicSerializer<MmlWidget>("MmlWidget")
+
     protected _parseInlineCssProperty(name: string, value: string, container: SyntaxNode.NodeWithStyle | null): SyntaxNode.NodeWithStyle | null {
         if (name == "color") {
             if (value.startsWith("#")) {
@@ -123,23 +136,58 @@ export class MmlParser extends GenericParser {
                 object = new SyntaxNode.Span({ content, modifier: "code" })
             } else if (this.consume("[")) {
                 const content = this.parseFragment("]")
-                object = new SyntaxNode.Object({ content })
+                object = new SyntaxNode.Object({ content, type: "link" })
 
                 if (this.consume("(")) {
                     const url = this.readUntil(")")
-                    object.url = url
+                    object.value = url
                     this.index++
                 }
             } else if (this.consume("![")) {
                 const content = this.readUntil("]")
                 this.index++
 
-                object = new SyntaxNode.Object({ content: [], media: true, attributes: new Map([["alt", content]]) })
+                object = new SyntaxNode.Object({ content: [], type: "media", attributes: new Map([["alt", content]]) })
 
                 if (this.consume("(")) {
                     const url = this.readUntil(")")
-                    object.url = url
+                    object.value = url
                     this.index++
+                }
+            } else if (this.consume("<")) {
+                const name = this.readWhile(_isHtmlElementName)
+                object = new SyntaxNode.Object({ content: [], type: "raw", value: name })
+                let selfClosing = false
+
+                while (!this.isDone()) {
+                    this.skipWhile(isWhitespace)
+                    if (this.consume(">")) {
+                        break
+                    }
+
+                    if (this.consume("/>")) {
+                        selfClosing = true
+                        break
+                    }
+
+                    const start = this.index
+                    this.parseAttribute(object)
+                    if (this.index == start) {
+                        this.index++
+                    }
+                }
+
+                if (!selfClosing) {
+                    object.content = this.parseFragment(`</${name}>`)
+                }
+
+                if (isUpperCase(name, 0)) {
+                    if (this.widgets.getTypes().get(name) != null) {
+                        const widgetData = object.attributes ? Object.fromEntries(object.attributes) : {}
+                        widgetData["!type"] = name
+                        const widget = this.widgets.base.deserialize(widgetData)
+                        object = widget.getValue(this, object.content)
+                    }
                 }
             }
 
@@ -154,27 +202,11 @@ export class MmlParser extends GenericParser {
                             break
                         }
 
-                        if (this.consume(".")) {
-                            const className = this.readUntil(_isAttrTerminator)
-                            object.classList ??= []
-                            object.classList.push(className)
-                            continue
+                        const start = this.index
+                        this.parseAttribute(object)
+                        if (this.index == start) {
+                            this.index++
                         }
-
-                        const attrName = this.readUntil((v, i) => v[i] == "=" || v[i] == "}" || isWhitespace(v, i))
-                        let attrValue: string | null = null
-
-                        if (this.consume("=")) {
-                            if (this.consume("\"")) {
-                                attrValue = this.readUntil("\"")
-                                this.index++
-                            } else {
-                                attrValue = this.readUntil(_isAttrTerminator)
-                            }
-                        }
-
-                        object.attributes ??= new Map()
-                        object.attributes.set(attrName, attrValue ?? "")
                     }
                 }
 
@@ -193,6 +225,32 @@ export class MmlParser extends GenericParser {
         }
 
         return result
+    }
+
+    public parseAttribute(object: SyntaxNode.Inline) {
+        if (this.consume(".")) {
+            const className = this.readUntil(_isAttrTerminator)
+            object.classList ??= []
+            object.classList.push(className)
+            return
+        }
+
+        const attrName = this.readUntil(_isAttrNameTerminator)
+        let attrValue: string | null = null
+
+        if (attrName == "") return
+
+        if (this.consume("=")) {
+            if (this.consume("\"")) {
+                attrValue = this.readUntil("\"")
+                this.index++
+            } else {
+                attrValue = this.readUntil(_isAttrTerminator)
+            }
+        }
+
+        object.attributes ??= new Map()
+        object.attributes.set(attrName, attrValue ?? "")
     }
 
     public parseIndent() {
@@ -345,5 +403,17 @@ export class MmlParser extends GenericParser {
         this.parseSegment(0, rootSegment)
 
         return rootSegment
+    }
+
+    constructor(
+        input: string,
+        options?: { widgets?: Constructor<MmlWidget>[] }
+    ) {
+        super(input)
+        if (options?.widgets) {
+            for (const widget of options.widgets) {
+                this.widgets.register(widget)
+            }
+        }
     }
 }

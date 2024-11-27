@@ -118,6 +118,30 @@ export class LaTeXExporter {
             return
         }
 
+        if (node.kind == "object" && node.type == "raw") {
+            const block = node.attributes?.get("pragma-block") != null
+            if (block) {
+                this.result.push(`\\begin{${node.value}}`)
+            } else {
+                this.result.push("\\" + node.value)
+            }
+
+            const attributes = node.attributes == null ? null : [...node.attributes].filter(([key, value]) => !key.startsWith("pragma-"))
+            if (attributes && attributes.length > 0) {
+                this.result.push(`[${attributes.map(([key, value]) => value == "" ? key : `${key}=${value}`).join(", ")}]`)
+            }
+
+            if (node.content.length > 0) {
+                if (!block) this.result.push("{")
+                this.exportNodeContent(node)
+                if (!block) this.result.push("}")
+            }
+            if (block) {
+                this.result.push(`\\end{${node.value}}`)
+            }
+            return
+        }
+
         this.result.push(`!?!${node.kind}`)
     }
 
