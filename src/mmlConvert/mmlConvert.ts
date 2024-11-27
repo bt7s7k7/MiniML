@@ -3,21 +3,41 @@ import { MmlHtmlRenderer } from "../miniML/MmlHtmlRenderer"
 import { MmlParser } from "../miniML/MmlParser"
 import { HtmlImporter } from "../mmlHtmlImporter/HtmlImporter"
 import { LaTeXExporter } from "../mmlLaTeXExporter/LaTeXExporter"
+import { Type } from "../struct/Type"
+import { DEFAULT_OPTIONS } from "./options"
 
-async function initDOM() {
+export const CONVERT_OPTIONS = {
+    htmlSelector: Type.string.as(Type.nullable)
+}
+
+export type ConvertOptions = Type.Extract<Type.TypedObjectType<typeof CONVERT_OPTIONS>>
+
+async function loadHtml(input: string, options: ConvertOptions) {
     const { JSDOM } = await import("jsdom")
     const jsdom = new JSDOM()
-    for (const key of ["document", "Text", "HTMLElement"]) {
+    for (const key of ["document", "Text", "HTMLElement", "Comment", "DocumentFragment"]) {
         // @ts-ignore
         globalThis[key] = jsdom.window[key]
     }
+
+    const importer = new HtmlImporter(DEFAULT_OPTIONS)
+
+    if (options.htmlSelector) {
+        const _1 = importer.importDocument
+        importer.importDocument = function (element) {
+            element = element.querySelector(options.htmlSelector!) as HTMLElement ?? unreachable()
+            return _1.call(this, element)
+        }
+    }
+
+    return importer.importHtml(input)
 }
 
-export async function mmlConvert(inputText: string, input: "md" | "html", output: "html" | "latex") {
+export async function mmlConvert(inputText: string, input: "md" | "html", output: "html" | "latex", options: ConvertOptions) {
     const document = input == "md" ? (
-        new MmlParser(inputText).parseDocument()
+        new MmlParser(inputText, DEFAULT_OPTIONS).parseDocument()
     ) : input == "html" ? (
-        await initDOM(), new HtmlImporter().importHtml(inputText)
+        await loadHtml(inputText, options)
     ) : unreachable()
 
     const outputText = output == "html" ? (

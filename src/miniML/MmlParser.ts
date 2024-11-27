@@ -69,6 +69,14 @@ export class MmlParser extends GenericParser {
             }
         }
 
+        if (name == "font-weight") {
+            if (value.startsWith("700")) {
+                container ??= new SyntaxNode.Span({ content: [] })
+                container.modifier = "bold"
+                return container
+            }
+        }
+
         return container
     }
 

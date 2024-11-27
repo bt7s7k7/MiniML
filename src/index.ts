@@ -2,7 +2,7 @@ import { readFile, writeFile } from "fs/promises"
 import { basename, dirname, extname, join } from "path"
 import { Cli } from "./cli/Cli"
 import { asError } from "./comTypes/util"
-import { mmlConvert } from "./mmlConvert/mmlConvert"
+import { CONVERT_OPTIONS, mmlConvert } from "./mmlConvert/mmlConvert"
 import { Type } from "./struct/Type"
 
 const cli = new Cli("mini-ml")
@@ -22,8 +22,9 @@ const cli = new Cli("mini-ml")
         options: {
             input: Type.enum("md", "html").as(Type.nullable),
             output: Type.enum("html", "latex").as(Type.nullable),
+            ...CONVERT_OPTIONS
         },
-        async callback(source, dest, { input, output }) {
+        async callback(source, dest, { input, output, ...convertOptions }) {
             const outputFileExt = dest != null ? extname(dest) : output == "html" ? ".html" : output == "latex" ? ".tex" : ".html"
             const inputFileExt = extname(source)
             input ??= inputFileExt == ".md" ? "md" : inputFileExt == ".html" || inputFileExt == ".htm" ? "html" : "md"
@@ -41,7 +42,7 @@ const cli = new Cli("mini-ml")
                 throw inputText
             }
 
-            const outputText = await mmlConvert(inputText, input, output)
+            const outputText = await mmlConvert(inputText, input, output, convertOptions)
 
             await writeFile(destPath, outputText)
         },

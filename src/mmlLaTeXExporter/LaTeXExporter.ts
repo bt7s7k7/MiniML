@@ -119,6 +119,20 @@ export class LaTeXExporter {
                 return
             }
 
+            if (node.modifier == "bold") {
+                this.result.push("\\textbf{")
+                this.exportNodeContent(node)
+                this.result.push("}")
+                return
+            }
+
+            if (node.modifier == "italics") {
+                this.result.push("\\textit{")
+                this.exportNodeContent(node)
+                this.result.push("}")
+                return
+            }
+
             this.exportNodeContent(node)
             return
         }

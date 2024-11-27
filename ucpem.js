@@ -2,7 +2,7 @@
 
 const { rm } = require("fs/promises")
 const { join } = require("path")
-const { project, github, constants } = require("ucpem")
+const { project, github, constants, run } = require("ucpem")
 
 project.prefix("src").use(
     github("bt7s7k7/Vue3GUI").res("vue3gui"),
@@ -53,3 +53,9 @@ project.script("build", async () => {
         }
     })
 }, { desc: "Builds CLI form of the project" })
+
+project.script("cli", async (args) => {
+    await run("ucpem run build")
+    process.argv = [...process.argv.slice(0, 2), ...args]
+    await import(join(constants.projectPath, "./dist/index.mjs"))
+}, { desc: "Builds and runs the cli with the specified arguments", argc: NaN })
