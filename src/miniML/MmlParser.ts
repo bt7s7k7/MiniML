@@ -3,7 +3,7 @@ import { Constructor } from "../comTypes/types"
 import { isNumber, isUpperCase, isWhitespace, isWord } from "../comTypes/util"
 import { Struct } from "../struct/Struct"
 import { DeserializationError } from "../struct/Type"
-import { MmlWidget } from "./MmlWidget"
+import { MmlWidget, WidgetVerbatimAttribute } from "./MmlWidget"
 import { SyntaxNode } from "./SyntaxNode"
 
 function _isSpecialChar(v: string, i: number) {
@@ -156,6 +156,8 @@ export class MmlParser extends GenericParser {
                 }
             } else if (this.consume("<")) {
                 const name = this.readWhile(_isHtmlElementName)
+                const widget = this.widgets.getTypes().get(name)
+                const verbatim = widget?.getMetadata().get(WidgetVerbatimAttribute) != null
                 object = new SyntaxNode.Object({ content: [], type: "raw", value: name })
                 let selfClosing = false
 
@@ -178,12 +180,23 @@ export class MmlParser extends GenericParser {
                 }
 
                 if (!selfClosing) {
-                    object.content = this.parseFragment(`</${name}>`)
+                    const term = `</${name}>`
+                    if (verbatim) {
+                        object.content = [new SyntaxNode.Raw({ value: this.readUntil(term) })]
+                        this.index += term.length
+                    } else {
+                        object.content = this.parseFragment(term)
+                    }
+                } else {
+                    if (verbatim) {
+                        object.content = [new SyntaxNode.Raw({ value: "" })]
+                    }
                 }
+
 
                 if (isUpperCase(name, 0)) {
                     if (this.widgets.getTypes().get(name) != null) {
-                        const widgetData = object.attributes ? Object.fromEntries(object.attributes) : {}
+                        const widgetData = object.attributes ? Object.fromEntries([...object.attributes].map(([key, value]) => value == "" ? [key, true] : [key, value])) : {}
                         widgetData["!type"] = name
                         const widget = this.widgets.base.deserialize(widgetData)
                         object = widget.getValue(this, object.content)

@@ -106,6 +106,11 @@ export class LaTeXExporter {
             return
         }
 
+        if (node.kind == "raw") {
+            this.result.push(node.value)
+            return
+        }
+
         if (node.kind == "span") {
             if (node.modifier == "code") {
                 this.result.push("\\texttt{")

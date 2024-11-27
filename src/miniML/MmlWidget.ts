@@ -7,4 +7,9 @@ export class WidgetNotSupported extends Error {
 
 export abstract class MmlWidget {
     public abstract getValue(parser: MmlParser, content: SyntaxNode[]): SyntaxNode.Inline | null
+    public parseVerbatimContent(content: string): SyntaxNode[] {
+        return [new SyntaxNode.Raw({ value: content })]
+    }
 }
+
+export class WidgetVerbatimAttribute { }

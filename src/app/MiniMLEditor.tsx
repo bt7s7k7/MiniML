@@ -23,8 +23,10 @@ import { h } from "vue"
 import { RouterLink } from "vue-router"
 import { Optional } from "../comTypes/Optional"
 import { MmlVueExporter } from "../miniML/MmlVueExporter"
+import { LaTeXMathWidget } from "../mmlLaTeXExporter/LaTeXMathWidget"
 import { Button } from "../vue3gui/Button"
 import { MountNode } from "../vue3gui/MountNode"
+import { DEFAULT_OPTIONS } from "../mmlConvert/options"
 
 // @ts-ignore
 AbstractSyntaxNode.prototype[LogMarker.CUSTOM] = function (this: any) {
@@ -86,9 +88,9 @@ class _MmlEditorState extends EditorState {
         let mlDocument
 
         if (this.importType == "md") {
-            mlDocument = new MmlParser(code).parseDocument()
+            mlDocument = new MmlParser(code, DEFAULT_OPTIONS).parseDocument()
         } else if (this.importType == "html") {
-            mlDocument = new HtmlImporter().importHtml(code)
+            mlDocument = new HtmlImporter(DEFAULT_OPTIONS).importHtml(code)
         } else unreachable()
 
         this.ast = inspect(mlDocument, { color: DescriptionFormatter.htmlColor })

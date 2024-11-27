@@ -62,6 +62,12 @@ export namespace SyntaxNode {
         public readonly kind = "text"
     }
 
+    export class Raw extends Struct.define("Raw", {
+        value: Type.string
+    }, AbstractSyntaxNode) {
+        public readonly kind = "raw"
+    }
+
     export class Span extends Struct.define("Span", {
         ..._FORMAT_PROPS,
         content: _SyntaxNode_t.base.as(Type.array)

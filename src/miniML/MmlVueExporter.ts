@@ -21,6 +21,10 @@ export class MmlVueExporter extends MmlRenderer {
         return JSON.stringify(node)
     }
 
+    protected override _renderRaw(node: string): string {
+        return JSON.stringify(node)
+    }
+
     protected override _renderElement(element: string, attributes: Map<string, string> | null, content: SyntaxNode[]): string {
         if (element == "") return content.length == 0 ? "[]" : content.length == 1 ? this._renderNode(content[0]) : "[" + this._renderContent(content).join(", ") + "]"
 

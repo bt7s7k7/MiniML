@@ -65,6 +65,8 @@ export abstract class MmlRenderer {
 
     protected abstract _renderText(node: string): string
 
+    protected abstract _renderRaw(node: string): string
+
     protected abstract _renderElement(element: string, attributes: Map<string, string> | null, content: SyntaxNode[]): string
 
     protected abstract _renderElementRaw(element: string, attributes: Map<string, string> | null, content: any): string
@@ -140,6 +142,8 @@ export abstract class MmlRenderer {
     protected _renderNode(node: SyntaxNode): string {
         if (node.kind == "text") {
             return this._renderText(node.value)
+        } else if (node.kind == "raw") {
+            return this._renderRaw(node.value)
         } else if (node.kind == "span") {
             return this._renderSpan(node)
         } else if (node.kind == "object") {
@@ -164,6 +168,10 @@ export class MmlHtmlRenderer extends MmlRenderer {
 
     protected override _renderText(text: string) {
         return escapeHTML(text).replace(/\n/g, "<br>")
+    }
+
+    protected override _renderRaw(text: string) {
+        return text
     }
 
     protected override _renderElement(element: string, attributes: Map<string, string> | null, content: SyntaxNode[]): any {
