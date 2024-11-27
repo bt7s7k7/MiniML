@@ -188,7 +188,7 @@ export class HtmlImporter {
     public importHtml(html: string) {
         const template = document.createElement("template")
         template.innerHTML = html
-            .replace(/(\$\$EMBED{{)/g, "<!--$1")
+            .replace(/(\$\$EMBED{{|\$\$NOTE{{)/g, "<!--$1")
             .replace(/(}}\$\$)/g, "$1-->")
         const element = template.content
         return this.importDocument(element)
