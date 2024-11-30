@@ -44,7 +44,11 @@ const cli = new Cli("mini-ml")
 
             const outputText = await mmlConvert(inputText, input, output, convertOptions)
 
-            await writeFile(destPath, outputText)
+            if (dest == "-") {
+                process.stdout.write(outputText)
+            } else {
+                await writeFile(destPath, outputText)
+            }
         },
     })
 
