@@ -21,14 +21,14 @@ const cli = new Cli("mini-ml")
         ],
         options: {
             input: Type.enum("md", "html").as(Type.nullable),
-            output: Type.enum("html", "latex").as(Type.nullable),
+            output: Type.enum("html", "latex", "dump").as(Type.nullable),
             ...CONVERT_OPTIONS
         },
         async callback(source, dest, { input, output, ...convertOptions }) {
             const outputFileExt = dest != null ? extname(dest) : output == "html" ? ".html" : output == "latex" ? ".tex" : ".html"
             const inputFileExt = extname(source)
             input ??= inputFileExt == ".md" ? "md" : inputFileExt == ".html" || inputFileExt == ".htm" ? "html" : "md"
-            output ??= outputFileExt == ".html" ? "html" : outputFileExt == ".tex" ? "latex" : "html"
+            output ??= outputFileExt == ".html" ? "html" : outputFileExt == ".tex" ? "latex" : outputFileExt == ".json" ? "dump" : "html"
 
             const destPath = dest ?? join(dirname(source), basename(source, inputFileExt) + outputFileExt)
             cli.printOutput(`Converting ${source} to ${destPath}...`)

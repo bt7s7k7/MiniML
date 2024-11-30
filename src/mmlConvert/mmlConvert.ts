@@ -1,6 +1,7 @@
 import { unreachable } from "../comTypes/util"
 import { MmlHtmlRenderer } from "../miniML/MmlHtmlRenderer"
 import { MmlParser } from "../miniML/MmlParser"
+import { SyntaxNode_t } from "../miniML/SyntaxNode"
 import { HtmlImporter } from "../mmlHtmlImporter/HtmlImporter"
 import { LaTeXExporter } from "../mmlLaTeXExporter/LaTeXExporter"
 import { Type } from "../struct/Type"
@@ -33,7 +34,7 @@ async function loadHtml(input: string, options: ConvertOptions) {
     return importer.importHtml(input)
 }
 
-export async function mmlConvert(inputText: string, input: "md" | "html", output: "html" | "latex", options: ConvertOptions) {
+export async function mmlConvert(inputText: string, input: "md" | "html", output: "html" | "latex" | "dump", options: ConvertOptions) {
     const document = input == "md" ? (
         new MmlParser(inputText, DEFAULT_OPTIONS).parseDocument()
     ) : input == "html" ? (
@@ -44,6 +45,8 @@ export async function mmlConvert(inputText: string, input: "md" | "html", output
         new MmlHtmlRenderer().render(document)
     ) : output == "latex" ? (
         new LaTeXExporter().exportDocument(document)
+    ) : output == "dump" ? (
+        JSON.stringify(SyntaxNode_t.serialize(document), null, 4)
     ) : unreachable()
 
     return outputText
