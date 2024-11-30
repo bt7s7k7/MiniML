@@ -132,14 +132,16 @@ export class MmlParser extends GenericParser {
 
             let object: SyntaxNode.Inline | null = null
 
+            const wasSpace = isWhitespace(this.at(-1), 0)
+
             let newTerm: string | null = null
-            if ((newTerm = this.consume(["**", "__"]))) {
+            if (wasSpace && (newTerm = this.consume(["**", "__"]))) {
                 const content = this.parseFragment(newTerm)
                 object = new SyntaxNode.Span({ content, modifier: "bold" })
-            } else if ((newTerm = this.consume(["*", "_"]))) {
+            } else if (wasSpace && (newTerm = this.consume(["*", "_"]))) {
                 const content = this.parseFragment(newTerm)
                 object = new SyntaxNode.Span({ content, modifier: "italics" })
-            } else if (this.consume("`")) {
+            } else if (wasSpace && this.consume("`")) {
                 const content = this.parseFragment("`")
                 object = new SyntaxNode.Span({ content, modifier: "code" })
             } else if (this.consume("[")) {
