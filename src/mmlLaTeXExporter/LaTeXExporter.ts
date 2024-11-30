@@ -115,29 +115,43 @@ export class LaTeXExporter {
         }
 
         if (node.kind == "span") {
-            if (node.modifier == "code") {
-                this.result.push("\\texttt{")
-                this.exportNodeContent(node)
-                this.result.push("}")
-                return
+            const gapStart = node.attributes?.get("pragma-spc") != null
+            const gapEnd = node.attributes?.get("pragma-spc0") != null
+            const gapBoth = node.attributes?.get("pragma-spc1") != null
+
+            if (gapBoth || gapStart) {
+                this.result.push(" ")
             }
 
-            if (node.modifier == "bold") {
-                this.result.push("\\textbf{")
-                this.exportNodeContent(node)
-                this.result.push("}")
-                return
-            }
+            try {
+                if (node.modifier == "code") {
+                    this.result.push("\\texttt{")
+                    this.exportNodeContent(node)
+                    this.result.push("}")
+                    return
+                }
 
-            if (node.modifier == "italics") {
-                this.result.push("\\textit{")
-                this.exportNodeContent(node)
-                this.result.push("}")
-                return
-            }
+                if (node.modifier == "bold") {
+                    this.result.push("\\textbf{")
+                    this.exportNodeContent(node)
+                    this.result.push("}")
+                    return
+                }
 
-            this.exportNodeContent(node)
-            return
+                if (node.modifier == "italics") {
+                    this.result.push("\\textit{")
+                    this.exportNodeContent(node)
+                    this.result.push("}")
+                    return
+                }
+
+                this.exportNodeContent(node)
+                return
+            } finally {
+                if (gapBoth || gapEnd) {
+                    this.result.push(" ")
+                }
+            }
         }
 
         if (node.kind == "object" && node.type == "raw") {
