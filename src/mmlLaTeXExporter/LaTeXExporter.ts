@@ -102,7 +102,10 @@ export class LaTeXExporter {
         }
 
         if (node.kind == "text") {
-            this.result.push(node.value.replace(/\\/g, "\\textbackslash"))
+            this.result.push(node.value
+                .replace(/\\/g, "\\textbackslash")
+                .replace(/_/g, "\\_")
+            )
             return
         }
 
