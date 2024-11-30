@@ -143,6 +143,13 @@ export class LaTeXExporter {
         if (node.kind == "object" && node.type == "raw") {
             const block = node.attributes?.get("pragma-block") != null
             const star = node.attributes?.get("pragma-star") != null
+            const gapStart = node.attributes?.get("pragma-spc") != null
+            const gapEnd = node.attributes?.get("pragma-spc0") != null
+            const gapBoth = node.attributes?.get("pragma-spc1") != null
+
+            if (gapBoth || gapStart) {
+                this.result.push(" ")
+            }
 
             let name = node.value
             if (star) {
@@ -168,6 +175,10 @@ export class LaTeXExporter {
 
             if (block) {
                 this.result.push(`\\end{${name}}`)
+            }
+
+            if (gapBoth || gapEnd) {
+                this.result.push(" ")
             }
 
             return
