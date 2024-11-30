@@ -1,8 +1,8 @@
 import { GenericParser } from "../comTypes/GenericParser"
 import { Constructor } from "../comTypes/types"
-import { isNumber, isUpperCase, isWhitespace, isWord } from "../comTypes/util"
+import { isNumber, isWhitespace, isWord, mapConcat, unreachable } from "../comTypes/util"
 import { Struct } from "../struct/Struct"
-import { DeserializationError } from "../struct/Type"
+import { DeserializationError, Type } from "../struct/Type"
 import { MmlWidget, WidgetVerbatimAttribute } from "./MmlWidget"
 import { SyntaxNode } from "./SyntaxNode"
 
@@ -202,12 +202,26 @@ export class MmlParser extends GenericParser {
                 }
 
 
-                if (isUpperCase(name, 0)) {
-                    if (this.widgets.getTypes().get(name) != null) {
-                        const widgetData = object.attributes ? Object.fromEntries([...object.attributes].map(([key, value]) => value == "" ? [key, true] : [key, value])) : {}
-                        widgetData["!type"] = name
-                        const widget = this.widgets.base.deserialize(widgetData)
-                        object = widget.getValue(this, object.content)
+                const widgetType = this.widgets.getTypes().get(name)
+                if (widgetType != null) {
+                    const widgetData = object.attributes ? Object.fromEntries([...object.attributes].map(([key, value]) => value == "" ? [key, true] : [key, value])) : {}
+                    widgetData["!type"] = name
+                    const widget = this.widgets.base.deserialize(widgetData)
+                    const inheritedAttributes = object.attributes ? new Map(object.attributes) : null
+
+                    object = widget.getValue(this, object.content)
+
+                    if (object && inheritedAttributes) {
+                        if (!Type.isObject(widgetType)) unreachable()
+                        for (const [key,] of widgetType.propList) {
+                            inheritedAttributes.delete(key)
+                        }
+
+                        if (object.attributes) {
+                            object.attributes = mapConcat(inheritedAttributes, object.attributes)
+                        } else {
+                            object.attributes = inheritedAttributes
+                        }
                     }
                 }
             }
