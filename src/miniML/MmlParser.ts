@@ -444,7 +444,7 @@ export class MmlParser extends GenericParser {
 
     constructor(
         input: string,
-        options?: { widgets?: Constructor<MmlWidget>[] }
+        options?: MmlParser.Options
     ) {
         super(input)
         if (options?.widgets) {
@@ -452,5 +452,11 @@ export class MmlParser extends GenericParser {
                 this.widgets.register(widget)
             }
         }
+    }
+}
+
+export namespace MmlParser {
+    export interface Options {
+        widgets?: Constructor<MmlWidget>[]
     }
 }

@@ -1,7 +1,21 @@
+import { escapeRegex } from "../comTypes/util"
 import { MmlParser } from "../miniML/MmlParser"
 import { SyntaxNode } from "../miniML/SyntaxNode"
 
+export interface HtmlInputShortcut {
+    start: string
+    end: string
+    object?: string | null
+    prefix?: string | null
+    suffix?: string | null
+}
+
 export class HtmlImporter {
+    public shortcuts: HtmlInputShortcut[] = [
+        { start: "$$EMBED{{", end: "}}$$" },
+        { start: "$$NOTE{{", end: "}}$$", object: "__discard__" }
+    ]
+
     protected readonly _embedParser: HtmlImporter.InlineCssParser
 
     public get widgets() { return this._embedParser.widgets }
@@ -134,18 +148,36 @@ export class HtmlImporter {
         if (node instanceof Comment) {
             const content = node.textContent
             if (content == null) return null
-            if (content.startsWith("$$EMBED{{") && content.endsWith("}}$$")) {
-                const embedContent = content.slice(9, -4)
-                const parsedEmbed = document.createElement("template")
-                parsedEmbed.innerHTML = embedContent
-                const embedSource = this.flattenIntoText(parsedEmbed.content)
-                const mml = this._embedParser.clone(embedSource)
-                if (embedSource.includes("\n")) {
-                    return mml.parseDocument()
-                } else {
-                    const result = new SyntaxNode.Span({ content: [] })
-                    mml.parseFragment(null, result.content)
-                    return result
+
+            for (const shortcut of this.shortcuts) {
+                if (content.startsWith(shortcut.start) && content.endsWith(shortcut.end)) {
+                    if (shortcut.object == "__discard__") break
+
+                    const embedContent = content.slice(shortcut.start.length, -shortcut.end.length)
+                    const parsedEmbed = document.createElement("template")
+                    parsedEmbed.innerHTML = embedContent
+                    let embedSource = this.flattenIntoText(parsedEmbed.content)
+
+                    if (shortcut.object) {
+                        embedSource = `<${shortcut.object}>${embedSource}</${shortcut.object}>`
+                    }
+
+                    if (shortcut.prefix != null) {
+                        embedSource = shortcut.prefix + embedSource
+                    }
+
+                    if (shortcut.suffix != null) {
+                        embedSource = shortcut.suffix + embedSource
+                    }
+
+                    const mml = this._embedParser.clone(embedSource)
+                    if (embedSource.includes("\n")) {
+                        return mml.parseDocument()
+                    } else {
+                        const result = new SyntaxNode.Span({ content: [] })
+                        mml.parseFragment(null, result.content)
+                        return result
+                    }
                 }
             }
         }
@@ -187,22 +219,35 @@ export class HtmlImporter {
 
     public importHtml(html: string) {
         const template = document.createElement("template")
-        template.innerHTML = html
-            .replace(/(\$\$EMBED{{|\$\$NOTE{{)/g, "<!--$1")
-            .replace(/(}}\$\$)/g, "$1-->")
+
+        if (this.shortcuts.length > 0) {
+            const startRegex = new RegExp(`(${this.shortcuts.map(v => escapeRegex(v.start)).join("|")})`, "g")
+            const endRegex = new RegExp(`(${this.shortcuts.map(v => escapeRegex(v.end)).join("|")})`, "g")
+
+            template.innerHTML = html
+                .replace(startRegex, "<!--$1")
+                .replace(endRegex, "$1-->")
+        } else {
+            template.innerHTML = html
+        }
         const element = template.content
         return this.importDocument(element)
     }
 
     constructor(
-        options?: ConstructorParameters<typeof MmlParser>[1]
+        options?: HtmlImporter.Options
     ) {
         this._embedParser = new HtmlImporter.InlineCssParser("", options)
+        if (options?.shortcuts) {
+            this.shortcuts.push(...options.shortcuts)
+        }
     }
 }
 
 export namespace HtmlImporter {
     export const META_MARGIN_LEFT = "META_MARGIN_LEFT" as SyntaxNode.Metadata<number>
+
+    export type Options = MmlParser.Options & { shortcuts?: HtmlInputShortcut[] }
 
     export class InlineCssParser extends MmlParser {
         protected override _parseInlineCssProperty(name: string, value: string, container: SyntaxNode.NodeWithStyle | null): SyntaxNode.NodeWithStyle | null {
