@@ -5,10 +5,12 @@ import { SyntaxNode_t } from "../miniML/SyntaxNode"
 import { HtmlImporter } from "../mmlHtmlImporter/HtmlImporter"
 import { LaTeXExporter } from "../mmlLaTeXExporter/LaTeXExporter"
 import { Type } from "../struct/Type"
-import { DEFAULT_OPTIONS } from "./options"
+import { DEFAULT_OPTIONS, useHtmlCitation, useHtmlMath } from "./options"
 
 export const CONVERT_OPTIONS = {
-    htmlSelector: Type.string.as(Type.nullable)
+    htmlSelector: Type.string.as(Type.nullable),
+    htmlMath: Type.boolean.as(Type.nullable),
+    htmlCite: Type.boolean.as(Type.nullable)
 }
 
 export type ConvertOptions = Type.Extract<Type.TypedObjectType<typeof CONVERT_OPTIONS>>
@@ -19,6 +21,14 @@ async function loadHtml(input: string, options: ConvertOptions) {
     for (const key of ["document", "Text", "HTMLElement", "Comment", "DocumentFragment"]) {
         // @ts-ignore
         globalThis[key] = jsdom.window[key]
+    }
+
+    if (options.htmlMath) {
+        useHtmlMath()
+    }
+
+    if (options.htmlCite) {
+        useHtmlCitation()
     }
 
     const importer = new HtmlImporter(DEFAULT_OPTIONS)

@@ -26,7 +26,7 @@ import { MmlVueExporter } from "../miniML/MmlVueExporter"
 import { LaTeXMathWidget } from "../mmlLaTeXExporter/LaTeXMathWidget"
 import { Button } from "../vue3gui/Button"
 import { MountNode } from "../vue3gui/MountNode"
-import { DEFAULT_OPTIONS } from "../mmlConvert/options"
+import { DEFAULT_OPTIONS, useHtmlCitation, useHtmlMath } from "../mmlConvert/options"
 
 // @ts-ignore
 AbstractSyntaxNode.prototype[LogMarker.CUSTOM] = function (this: any) {
@@ -39,6 +39,9 @@ AbstractSyntaxNode.prototype[LogMarker.CUSTOM] = function (this: any) {
     }
     return result
 }
+
+useHtmlCitation()
+useHtmlMath()
 
 class _MmlEditorState extends EditorState {
     public preview: HTMLElement | (() => any) | string | null = null
