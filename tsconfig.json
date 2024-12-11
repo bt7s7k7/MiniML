@@ -18,13 +18,15 @@
             "vite/client",
             "@types/node",
         ],
-        "useDefineForClassFields": false
+        "useDefineForClassFields": false,
+        "skipLibCheck": true
     },
     "include": [
         "src/**/*.ts",
         "src/**/*.d.ts",
         "src/**/*.tsx",
         "src/**/*.vue",
-        "src/mmlLaTeXExporter"
+        "src/mmlLaTeXExporter",
+        "src/mmlVite"
     ]
 }

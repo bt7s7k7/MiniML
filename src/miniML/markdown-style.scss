@@ -41,5 +41,9 @@
         &[href]:hover, &[href]:focus-visible {
             text-decoration: underline;
         }
+
+        &[href].as-button {
+            text-decoration: none;
+        }
     }
 }

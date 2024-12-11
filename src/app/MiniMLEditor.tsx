@@ -23,10 +23,9 @@ import { h } from "vue"
 import { RouterLink } from "vue-router"
 import { Optional } from "../comTypes/Optional"
 import { MmlVueExporter } from "../miniML/MmlVueExporter"
-import { LaTeXMathWidget } from "../mmlLaTeXExporter/LaTeXMathWidget"
+import { DEFAULT_OPTIONS, useHtmlCitation, useHtmlMath } from "../mmlConvert/options"
 import { Button } from "../vue3gui/Button"
 import { MountNode } from "../vue3gui/MountNode"
-import { DEFAULT_OPTIONS, useHtmlCitation, useHtmlMath } from "../mmlConvert/options"
 
 // @ts-ignore
 AbstractSyntaxNode.prototype[LogMarker.CUSTOM] = function (this: any) {

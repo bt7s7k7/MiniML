@@ -22,6 +22,10 @@ project.prefix("src").res("mmlLaTeXExporter",
     project.ref("miniML")
 )
 
+project.prefix("src").res("mmlVite",
+    project.ref("miniML")
+)
+
 project.prefix("src").res("mmlConvert",
     project.ref("mmlLaTeXExporter"),
     project.ref("mmlHtmlImporter"),
