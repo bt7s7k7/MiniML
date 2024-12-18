@@ -3,6 +3,7 @@ import { MmlHtmlRenderer } from "../miniML/MmlHtmlRenderer"
 import { MmlParser } from "../miniML/MmlParser"
 import { SyntaxNode_t } from "../miniML/SyntaxNode"
 import { HtmlImporter } from "../mmlHtmlImporter/HtmlImporter"
+import { ListNormalizer } from "../mmlHtmlImporter/normalizeLists"
 import { LaTeXExporter } from "../mmlLaTeXExporter/LaTeXExporter"
 import { Type } from "../struct/Type"
 import { DEFAULT_OPTIONS, useHtmlCitation, useHtmlMath } from "./options"
@@ -10,7 +11,8 @@ import { DEFAULT_OPTIONS, useHtmlCitation, useHtmlMath } from "./options"
 export const CONVERT_OPTIONS = {
     htmlSelector: Type.string.as(Type.nullable),
     htmlMath: Type.boolean.as(Type.nullable),
-    htmlCite: Type.boolean.as(Type.nullable)
+    htmlCite: Type.boolean.as(Type.nullable),
+    htmlNormalizeLists: Type.boolean.as(Type.nullable)
 }
 
 export type ConvertOptions = Type.Extract<Type.TypedObjectType<typeof CONVERT_OPTIONS>>
@@ -41,7 +43,13 @@ async function loadHtml(input: string, options: ConvertOptions) {
         }
     }
 
-    return importer.importHtml(input)
+    const root = importer.importHtml(input)
+    if (options.htmlNormalizeLists) {
+        const normalizer = new ListNormalizer()
+        const result = normalizer.transform(root)
+        if (normalizer.wasModified) return result
+    }
+    return root
 }
 
 export async function mmlConvert(inputText: string, input: "md" | "html", output: "html" | "latex" | "dump", options: ConvertOptions) {

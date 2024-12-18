@@ -24,6 +24,7 @@ import { RouterLink } from "vue-router"
 import { Optional } from "../comTypes/Optional"
 import { MmlVueExporter } from "../miniML/MmlVueExporter"
 import { DEFAULT_OPTIONS, useHtmlCitation, useHtmlMath } from "../mmlConvert/options"
+import { ListNormalizer } from "../mmlHtmlImporter/normalizeLists"
 import { Button } from "../vue3gui/Button"
 import { MountNode } from "../vue3gui/MountNode"
 
@@ -93,6 +94,9 @@ class _MmlEditorState extends EditorState {
             mlDocument = new MmlParser(code, DEFAULT_OPTIONS).parseDocument()
         } else if (this.importType == "html") {
             mlDocument = new HtmlImporter(DEFAULT_OPTIONS).importHtml(code)
+            const normalizer = new ListNormalizer()
+            mlDocument = normalizer.transform(mlDocument)
+            if (normalizer.wasDropped) unreachable()
         } else unreachable()
 
         this.ast = inspect(mlDocument, { color: DescriptionFormatter.htmlColor })
