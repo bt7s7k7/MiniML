@@ -20,6 +20,16 @@ export class LaTeXExporter {
         }
     }
 
+    public emitBlockElement(node: SyntaxNode.Segment, name: string) {
+        this.emitIndent()
+        this.result.push("\\begin{" + name + "}\n")
+        this.indent++
+        this.exportNodeContent(node)
+        this.indent--
+        this.emitIndent()
+        this.result.push("\\end{" + name + "}\n")
+    }
+
     public exportNode(node: SyntaxNode) {
         if (node.kind == "segment") {
             if (node.type == 1) {
@@ -34,6 +44,15 @@ export class LaTeXExporter {
             if (node.type == 2) {
                 this.emitIndent()
                 this.result.push("\\subsection{")
+                this.skipNextIndent = true
+                this.exportNodeContent(node)
+                this.result.push("}\n\n")
+                return
+            }
+
+            if (node.type == 3) {
+                this.emitIndent()
+                this.result.push("\\subsubsection{")
                 this.skipNextIndent = true
                 this.exportNodeContent(node)
                 this.result.push("}\n\n")
@@ -57,43 +76,25 @@ export class LaTeXExporter {
             }
 
             if (node.type == "ul") {
-                this.emitIndent()
-                this.result.push("\\begin{itemize}\n")
-                this.indent++
-                this.exportNodeContent(node)
-                this.indent--
-                this.emitIndent()
-                this.result.push("\\end{itemize}\n")
+                this.emitBlockElement(node, "itemize")
                 return
             }
 
             if (node.type == "quote") {
-                this.emitIndent()
-                this.result.push("\\begin{quote}\n")
-                this.indent++
-                this.exportNodeContent(node)
-                this.indent--
-                this.emitIndent()
-                this.result.push("\\end{quote}\n")
+                this.emitBlockElement(node, "quote")
                 return
             }
 
             if (node.type == "ol") {
-                this.emitIndent()
-                this.result.push("\\begin{enumerate}\n")
-                this.indent++
-                this.exportNodeContent(node)
-                this.indent--
-                this.emitIndent()
-                this.result.push("\\end{enumerate}\n")
+                this.emitBlockElement(node, "enumerate")
                 return
             }
 
             if (node.type == "li") {
                 this.emitIndent()
                 this.result.push("\\item ")
-                this.skipNextIndent = true
                 this.exportNodeContent(node)
+                this.result.push("\n")
                 return
             }
 
@@ -125,23 +126,23 @@ export class LaTeXExporter {
 
             try {
                 if (node.modifier == "code") {
-                    this.result.push("\\texttt{")
+                    this.result.push(" \\texttt{")
                     this.exportNodeContent(node)
-                    this.result.push("}")
+                    this.result.push("} ")
                     return
                 }
 
                 if (node.modifier == "bold") {
-                    this.result.push("\\textbf{")
+                    this.result.push(" \\textbf{")
                     this.exportNodeContent(node)
-                    this.result.push("}")
+                    this.result.push("} ")
                     return
                 }
 
                 if (node.modifier == "italics") {
-                    this.result.push("\\textit{")
+                    this.result.push(" \\textit{")
                     this.exportNodeContent(node)
-                    this.result.push("}")
+                    this.result.push("} ")
                     return
                 }
 
