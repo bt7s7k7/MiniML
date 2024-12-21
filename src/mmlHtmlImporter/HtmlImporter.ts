@@ -3,8 +3,8 @@ import { MmlParser } from "../miniML/MmlParser"
 import { SyntaxNode } from "../miniML/SyntaxNode"
 
 export interface HtmlInputShortcut {
-    start: string
-    end: string
+    start: string | RegExp
+    end: string | RegExp
     object?: string | null
     prefix?: string | null
     suffix?: string | null
@@ -149,11 +149,13 @@ export class HtmlImporter {
             const content = node.textContent
             if (content == null) return null
 
-            for (const shortcut of this.shortcuts) {
-                if (content.startsWith(shortcut.start) && content.endsWith(shortcut.end)) {
+            for (const { regexp, shortcut } of this._shortcutMatches) {
+                const match = content.match(regexp)
+
+                if (match) {
                     if (shortcut.object == "__discard__") break
 
-                    const embedContent = content.slice(shortcut.start.length, -shortcut.end.length)
+                    const embedContent = match[1]
                     const parsedEmbed = document.createElement("template")
                     parsedEmbed.innerHTML = embedContent
                     let embedSource = this.flattenIntoText(parsedEmbed.content)
@@ -217,12 +219,14 @@ export class HtmlImporter {
         return rootSegment
     }
 
+    protected _shortcutMatches: { regexp: RegExp, shortcut: HtmlInputShortcut }[] = []
+
     public importHtml(html: string) {
         const template = document.createElement("template")
 
         if (this.shortcuts.length > 0) {
-            const startRegex = new RegExp(`(${this.shortcuts.map(v => escapeRegex(v.start)).join("|")})`, "g")
-            const endRegex = new RegExp(`(${this.shortcuts.map(v => escapeRegex(v.end)).join("|")})`, "g")
+            const startRegex = new RegExp(`(${this.shortcuts.map(v => typeof v.start == "string" ? escapeRegex(v.start) : `(?:${v.start.source})`).join("|")})`, "g")
+            const endRegex = new RegExp(`(${this.shortcuts.map(v => typeof v.end == "string" ? escapeRegex(v.end) : `(?:${v.end.source})`).join("|")})`, "g")
 
             template.innerHTML = html
                 .replace(startRegex, "<!--$1")
@@ -230,6 +234,14 @@ export class HtmlImporter {
         } else {
             template.innerHTML = html
         }
+
+        this._shortcutMatches = this.shortcuts.map(shortcut => ({
+            regexp: new RegExp(`^(?:${typeof shortcut.start == "string" ? escapeRegex(shortcut.start) : shortcut.start.source
+                })(.*)(?:${typeof shortcut.end == "string" ? escapeRegex(shortcut.end) : shortcut.end.source
+                })$`, ""),
+            shortcut,
+        }))
+
         const element = template.content
         return this.importDocument(element)
     }

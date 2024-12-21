@@ -32,4 +32,28 @@ export function useHtmlMath() {
         end: "}}$$",
         prefix: "<Math pragma-spc>"
     })
+
+    DEFAULT_OPTIONS.shortcuts!.push({
+        start: /(?:\xa0|&nbsp;| )&lt;&lt;/,
+        end: /&gt;&gt;(?:\xa0|&nbsp;| )/,
+        prefix: "<Math pragma-spc1>"
+    })
+
+    DEFAULT_OPTIONS.shortcuts!.push({
+        start: /(?:\xa0|&nbsp;| )&lt;&lt;/,
+        end: "&gt;&gt;",
+        prefix: "<Math pragma-spc>"
+    })
+
+    DEFAULT_OPTIONS.shortcuts!.push({
+        start: "&lt;&lt;",
+        end: /&gt;&gt;(?:\xa0|&nbsp;| )/,
+        prefix: "<Math pragma-spc0>"
+    })
+
+    DEFAULT_OPTIONS.shortcuts!.push({
+        start: "&lt;&lt;",
+        end: "&gt;&gt;",
+        prefix: "<Math>"
+    })
 }
