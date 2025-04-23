@@ -1,9 +1,12 @@
+import { range, Reducers, unreachable } from "../comTypes/util"
 import { SyntaxNode } from "../miniML/SyntaxNode"
+import { LaTeXTableOptions } from "./LaTeXTableOptionsWidget"
 
 export class LaTeXExporter {
     public result: string[] = []
     public indent = 0
     public skipNextIndent = true
+    public tableOptions = LaTeXTableOptions.default()
 
     public emitIndent() {
         if (this.skipNextIndent) {
@@ -156,6 +159,15 @@ export class LaTeXExporter {
         }
 
         if (node.kind == "object" && node.type == "raw") {
+            if (node.value && node.value.startsWith("<>")) {
+                if (node.value == LaTeXTableOptions.tagname) {
+                    this.tableOptions = LaTeXTableOptions.ref().deserialize(JSON.parse(node.attributes!.get("value")!))
+                    return
+                }
+
+                return
+            }
+
             const block = node.attributes?.get("pragma-block") != null
             const star = node.attributes?.get("pragma-star") != null
             const gapStart = node.attributes?.get("pragma-spc") != null
@@ -196,6 +208,61 @@ export class LaTeXExporter {
                 this.result.push(" ")
             }
 
+            return
+        }
+
+        if (node.kind == "table") {
+            if (node.content.length == 0) return
+            const sampleRow = node.content[0]
+            if (sampleRow.kind != "table-row") return
+            const columns = sampleRow.content
+
+            const { compact, widths, types, naked, long } = this.tableOptions
+            let remainingWidth = 1
+            if (!compact) {
+                for (const width of widths) {
+                    remainingWidth -= width
+                }
+            }
+
+            let flexibleRowCount = widths.map(v => v == 0 ? 1 : 0).reduce(Reducers.sum(), 0)
+            if (widths.length < columns.length) {
+                flexibleRowCount += columns.length - widths.length
+            }
+
+            const tableType = long ? "longtable" : "tabular"
+
+            this.result.push(`\\begin{${tableType}}{ ${naked ? "" : "|"}${[...range(columns.length)].map((_, i) => {
+                let type = i < types.length ? types[i] : "p"
+                if (!compact) {
+                    const width = i < widths.length ? widths[i] : remainingWidth / flexibleRowCount
+                    type += `{\\dimexpr ${width}\\textwidth -2\\tabcolsep}`
+                }
+                return type + (naked ? "" : "|")
+            }).join("")}}\n`)
+            if (!naked) this.result.push("\\hline\n")
+
+            for (let i = 0; i < node.content.length; i++) {
+                const row = node.content[i]
+                if (row.kind != "table-row") unreachable()
+
+                for (let i = 0; i < row.content.length; i++) {
+                    const column = row.content[i]
+
+                    this.exportNode(column)
+
+                    const last = i == row.content.length - 1
+                    if (!last) this.result.push(" & ")
+                }
+
+                const last = i == node.content.length - 1
+                if (!naked || !last) {
+                    this.result.push("\\\\\n")
+                }
+                if (!naked) this.result.push("\\hline\n")
+            }
+
+            this.result.push(`\\end{${tableType}}`)
             return
         }
 

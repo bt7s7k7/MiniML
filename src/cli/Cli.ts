@@ -174,7 +174,7 @@ export namespace Cli {
 
             const unnamedArguments: any[] = []
             const namedArguments: Record<string, any> = Object.create(null)
-            const missingArguments = impl.options == null ? EMPTY_SET as never : new Set([...impl.options].filter(v => !Type.isNullable(v[1])).map(v => v[0]))
+            const missingArguments = impl.options == null ? EMPTY_SET as never : new Set([...impl.options].map(v => v[0]))
             const errors: string[] = []
             let endOfOptions = false
             for (let i = index; i < args.length; i++) {
@@ -236,6 +236,19 @@ export namespace Cli {
 
                     errors.push(`Missing parameter "<${name}>"`)
                     unnamedArguments.push(_INVALID)
+                }
+            }
+
+            if (missingArguments.size > 0) {
+                for (const missing of missingArguments) {
+                    const type = impl.options!.get(missing)!
+                    if (Type.isNullable(type)) {
+                        namedArguments[missing] = null
+                    } else if (Type.isOptional(type)) {
+                        namedArguments[missing] = type.default()
+                    } else {
+                        errors.push(`Missing option "--${missing}"`)
+                    }
                 }
             }
 

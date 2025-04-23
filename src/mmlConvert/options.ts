@@ -1,8 +1,9 @@
 import { HtmlImporter } from "../mmlHtmlImporter/HtmlImporter"
 import { LaTeXMathWidget } from "../mmlLaTeXExporter/LaTeXMathWidget"
+import { LaTeXTableOptionsWidget } from "../mmlLaTeXExporter/LaTeXTableOptionsWidget"
 
 export const DEFAULT_OPTIONS: HtmlImporter.Options = {
-    widgets: [LaTeXMathWidget],
+    widgets: [LaTeXMathWidget, LaTeXTableOptionsWidget],
     shortcuts: []
 }
 

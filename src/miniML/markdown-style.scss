@@ -46,4 +46,19 @@
             text-decoration: none;
         }
     }
+
+    table {
+        &, th, td {
+            border: black 1px solid;
+            border-collapse: collapse;
+        }
+
+        td {
+            padding: var(--size-int);
+        }
+
+        p, ul, il {
+            margin: 0;
+        }
+    }
 }

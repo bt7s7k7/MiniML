@@ -93,6 +93,23 @@ export namespace SyntaxNode {
         declare public content: SyntaxNode[]
     }
 
+    export class Table extends Struct.define("Table", {
+        ..._FORMAT_PROPS,
+        content: _SyntaxNode_t.base.as(Type.array),
+    }, AbstractSyntaxNode) {
+        public readonly kind = "table"
+        declare public content: SyntaxNode[]
+    }
+
+    export class TableRow extends Struct.define("TableRow", {
+        ..._FORMAT_PROPS,
+        content: _SyntaxNode_t.base.as(Type.array),
+        header: Type.boolean,
+    }, AbstractSyntaxNode) {
+        public readonly kind = "table-row"
+        declare public content: SyntaxNode[]
+    }
+
     export type Inline = Span | Object
 
     export class Segment extends Struct.define("Segment", {

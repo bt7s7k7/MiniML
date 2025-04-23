@@ -18,6 +18,8 @@ export class HtmlImporter {
 
     protected readonly _embedParser: HtmlImporter.InlineCssParser
 
+    public forceTableHeader: boolean
+
     public get widgets() { return this._embedParser.widgets }
     public set widgets(value) { this._embedParser.widgets = value }
 
@@ -77,6 +79,44 @@ export class HtmlImporter {
         }
     }
 
+    public importTable(tableElement: HTMLElement): SyntaxNode | null {
+        const table = SyntaxNode.Table.default()
+        this.importTableRows(tableElement, table, false)
+        return table
+    }
+
+    public importTableRows(container: HTMLElement, table: SyntaxNode.Table, header: boolean) {
+        for (const child of container.childNodes) {
+            if (!(child instanceof HTMLElement)) continue
+
+            if (child.tagName == "TBODY") {
+                this.importTableRows(child, table, false)
+                continue
+            }
+
+            if (child.tagName == "THEAD") {
+                this.importTableRows(child, table, true)
+                continue
+            }
+
+            if (child.tagName == "TR") {
+                const row = SyntaxNode.TableRow.default()
+                row.header = header
+                table.content.push(row)
+
+                for (const columnElement of child.childNodes) {
+                    if (!(columnElement instanceof HTMLElement) || columnElement.tagName != "TD") continue
+                    const column = this.importElement(columnElement)
+                    if (column != null) {
+                        row.content.push(column)
+                    }
+                }
+
+                continue
+            }
+        }
+    }
+
     public importElement(element: HTMLElement): SyntaxNode | null {
         let syntax: SyntaxNode.NodeWithStyle | null = null
 
@@ -108,6 +148,8 @@ export class HtmlImporter {
             syntax = new SyntaxNode.Object({ type: "media", value: (element as HTMLImageElement).src, content: [] })
         } else if (element.tagName == "A") {
             syntax = new SyntaxNode.Object({ type: "link", value: (element as HTMLAnchorElement).href, content: [] })
+        } else if (element.tagName == "TABLE") {
+            return this.importTable(element)
         } else if (element.tagName == "BR") {
             return new SyntaxNode.Text({ value: "\n" })
         }
@@ -253,13 +295,15 @@ export class HtmlImporter {
         if (options?.shortcuts) {
             this.shortcuts.push(...options.shortcuts)
         }
+
+        this.forceTableHeader = options?.forceTableHeader ?? true
     }
 }
 
 export namespace HtmlImporter {
     export const META_MARGIN_LEFT = "META_MARGIN_LEFT" as SyntaxNode.Metadata<number>
 
-    export type Options = MmlParser.Options & { shortcuts?: HtmlInputShortcut[] }
+    export type Options = MmlParser.Options & { shortcuts?: HtmlInputShortcut[], forceTableHeader?: boolean }
 
     export class InlineCssParser extends MmlParser {
         protected override _parseInlineCssProperty(name: string, value: string, container: SyntaxNode.NodeWithStyle | null): SyntaxNode.NodeWithStyle | null {

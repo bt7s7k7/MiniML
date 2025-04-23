@@ -1,5 +1,5 @@
 import { NOOP } from "../comTypes/const"
-import { escapeHTML, joinIterable, unreachable } from "../comTypes/util"
+import { autoFilter, escapeHTML, joinIterable, unreachable } from "../comTypes/util"
 import { SyntaxNode } from "./SyntaxNode"
 
 function _toPx(v: number) {
@@ -139,6 +139,33 @@ export abstract class MmlRenderer {
         return this._renderElementRaw("pre", null, this._renderElementRaw("code", node.lang != null ? new Map([["class", "language-" + node.lang]]) : null, this._renderText(node.content)))
     }
 
+    protected _renderTable(node: SyntaxNode.Table) {
+        const header: SyntaxNode.TableRow[] = []
+        const body: SyntaxNode.TableRow[] = []
+
+        for (const row of node.content) {
+            if (row.kind != "table-row") continue
+
+            if (row.header) {
+                header.push(row)
+                continue
+            }
+
+            body.push(row)
+        }
+
+        const renderRow = (row: SyntaxNode.TableRow) => (
+            this._renderElementRaw("tr", null, row.content.map(column => (
+                this._renderElementRaw("td", null, this._renderNode(column))
+            )).join(""))
+        )
+
+        return this._renderElementRaw("table", null, autoFilter([
+            header.length > 0 && this._renderElementRaw("thead", null, header.map(renderRow).join("")),
+            body.length > 0 && this._renderElementRaw("tbody", null, body.map(renderRow).join("")),
+        ]).join(""))
+    }
+
     protected _renderNode(node: SyntaxNode): string {
         if (node.kind == "text") {
             return this._renderText(node.value)
@@ -152,6 +179,8 @@ export abstract class MmlRenderer {
             return this._renderSegment(node)
         } else if (node.kind == "code-block") {
             return this._renderCodeBlock(node)
+        } else if (node.kind == "table") {
+            return this._renderTable(node)
         } else unreachable()
     }
 
