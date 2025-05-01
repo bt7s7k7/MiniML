@@ -218,7 +218,7 @@ export class LaTeXExporter {
             if (sampleRow.kind != "table-row") return
             const columns = sampleRow.content
 
-            const { compact, widths, types, naked, long } = this.tableOptions
+            const { compact, widths, types, naked, long, before: beforeSpec, after: afterSpec } = this.tableOptions
             let remainingWidth = 1
             if (!compact) {
                 for (const width of widths) {
@@ -233,12 +233,18 @@ export class LaTeXExporter {
 
             const tableType = long ? "longtable" : "tabular"
 
+            const lineBreak = beforeSpec || afterSpec ? "\\tabularnewline" : "\\\\"
+
             this.result.push(`\\begin{${tableType}}{ ${naked ? "" : "|"}${[...range(columns.length)].map((_, i) => {
                 let type = i < types.length ? types[i] : "p"
                 if (!compact) {
                     const width = i < widths.length ? widths[i] : remainingWidth / flexibleRowCount
                     type += `{\\dimexpr ${width}\\textwidth -2\\tabcolsep}`
                 }
+
+                if (beforeSpec) type = `>{${beforeSpec}}${type}`
+                if (afterSpec) type = `>{${afterSpec}}${type}`
+
                 return type + (naked ? "" : "|")
             }).join("")}}\n`)
             if (!naked) this.result.push("\\hline\n")
@@ -258,7 +264,7 @@ export class LaTeXExporter {
 
                 const last = i == node.content.length - 1
                 if (!naked || !last) {
-                    this.result.push("\\\\\n")
+                    this.result.push(lineBreak + "\n")
                 }
                 if (!naked) this.result.push("\\hline\n")
             }

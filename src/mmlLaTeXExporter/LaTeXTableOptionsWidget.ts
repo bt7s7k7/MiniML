@@ -10,6 +10,8 @@ export class LaTeXTableOptions extends Struct.define("LaTeXTableOptions", {
     compact: Type.boolean,
     naked: Type.boolean,
     long: Type.boolean,
+    before: Type.string.as(Type.nullable),
+    after: Type.string.as(Type.nullable),
 }) {
     public static readonly tagname = "<>latex-table-options"
 }
@@ -20,6 +22,8 @@ export class LaTeXTableOptionsWidget extends Struct.define("TableOptions", {
     compact: Type.boolean.as(Type.nullable),
     naked: Type.boolean.as(Type.nullable),
     long: Type.boolean.as(Type.nullable),
+    before: Type.string.as(Type.nullable),
+    after: Type.string.as(Type.nullable),
 }, MmlWidget) {
     public getValue(parser: MmlParser, content: SyntaxNode[]): SyntaxNode.Inline | null {
         const options = LaTeXTableOptions.default()
@@ -38,6 +42,9 @@ export class LaTeXTableOptionsWidget extends Struct.define("TableOptions", {
         if (this.compact) options.compact = true
         if (this.naked) options.naked = true
         if (this.long) options.long = true
+
+        options.before = this.before
+        options.after = this.after
 
         const node = new SyntaxNode.Object({
             type: "raw",
