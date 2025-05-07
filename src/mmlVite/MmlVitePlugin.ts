@@ -31,8 +31,25 @@ export function mmlPlugin(options?: mmlPlugin.Options): Plugin {
             const content = exporter.renderContent(root)
 
             for (const usedComponent of exporter.usedComponents) {
-                const path = options!.allowedComponents![usedComponent]
-                result.push(`import { ${usedComponent} } from "${join(relative(dirname(id), ""), path)}"`)
+                let path = options!.allowedComponents![usedComponent]
+                let name = usedComponent
+
+                if (path.includes("@")) {
+                    name = path.slice(path.indexOf("@") + 1)
+                    path = path.slice(0, path.indexOf("@"))
+                }
+
+                const importPath = path.startsWith("./") ? (
+                    "./" + join(relative(dirname(id), ""), path)
+                ) : (
+                    path
+                )
+
+                if (name == "default") {
+                    result.push(`import ${usedComponent} from "${importPath}"`)
+                } else {
+                    result.push(`import { ${name == usedComponent ? name : `${name} as ${usedComponent}`} } from "${importPath}"`)
+                }
             }
 
             result.push(`import { defineComponent, h } from "vue"`)

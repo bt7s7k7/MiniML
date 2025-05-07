@@ -84,8 +84,9 @@ export class MmlVueExporter extends MmlRenderer {
             return "[]"
         }
 
-        if (isUpperCase(element, 0)) {
-            if (this.allowedComponents.has(element)) {
+        const isComponent = this.allowedComponents.has(element)
+        if (isUpperCase(element, 0) || isComponent) {
+            if (isComponent) {
                 this.usedComponents.add(element)
                 const contentString = content.length == 0 ? "null" : content.length == 1 ? this._renderNode(content[0]) : this._renderContent(content).join(", ")
                 return `h(${element}, ${this._renderAttributes(attributes)}, () => ${contentString})`
@@ -101,9 +102,11 @@ export class MmlVueExporter extends MmlRenderer {
     protected override _renderElementRaw(element: string, attributes: Map<string, string> | null, content: any): string {
         if (element == "") return content
 
-        if (isUpperCase(element, 0)) {
-            if (this.allowedComponents.has(element)) {
-                return `h(${element}, ${this._renderAttributes(attributes)}, ${content})`
+        const isComponent = this.allowedComponents.has(element)
+        if (isUpperCase(element, 0) || isComponent) {
+            if (isComponent) {
+                this.usedComponents.add(element)
+                return `h(${element}, ${this._renderAttributes(attributes)}, () => ${content})`
             } else {
                 element = "span"
             }

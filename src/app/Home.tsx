@@ -1,5 +1,5 @@
 import { defineComponent } from "vue"
-import Content from "./Home.md"
+import Content from "../../README.md"
 
 export const Home = (defineComponent({
     name: "Home",

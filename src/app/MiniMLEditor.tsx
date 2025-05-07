@@ -2,34 +2,31 @@ import { mdiArrowRight, mdiCog } from "@mdi/js"
 import "codemirror/mode/htmlmixed/htmlmixed.js"
 import "codemirror/mode/javascript/javascript.js"
 import "codemirror/mode/markdown/markdown.js"
-import { defineComponent, reactive, watch } from "vue"
+import { defineComponent, h, reactive, watch } from "vue"
+import { RouterLink } from "vue-router"
+import { Optional } from "../comTypes/Optional"
 import { cloneArray, cloneWithout, escapeHTML, shallowClone, unreachable } from "../comTypes/util"
 import { Editor } from "../editor/Editor"
 import { EditorView } from "../editor/EditorView"
 import { EditorState } from "../editor/useEditorState"
 import { MmlHtmlRenderer } from "../miniML/MmlHtmlRenderer"
 import { MmlParser } from "../miniML/MmlParser"
+import { MmlVueExporter } from "../miniML/MmlVueExporter"
 import { AbstractSyntaxNode } from "../miniML/SyntaxNode"
+import { DEFAULT_OPTIONS, HTML_CITATIONS, HTML_MATH } from "../mmlConvert/options"
 import { HtmlImporter } from "../mmlHtmlImporter/HtmlImporter"
+import { ListNormalizer } from "../mmlHtmlImporter/normalizeLists"
 import { LaTeXExporter } from "../mmlLaTeXExporter/LaTeXExporter"
 import { DescriptionFormatter } from "../prettyPrint/DescriptionFormatter"
 import { inspect } from "../prettyPrint/inspect"
 import { LogMarker } from "../prettyPrint/ObjectDescription"
-import { Icon } from "../vue3gui/Icon"
-import { Tabs, useTabs } from "../vue3gui/Tabs"
-// @ts-ignore
-import { HtmlGenerator, parse } from "latex.js"
-import { h } from "vue"
-import { RouterLink } from "vue-router"
-import { Optional } from "../comTypes/Optional"
-import { MmlVueExporter } from "../miniML/MmlVueExporter"
-import { DEFAULT_OPTIONS, HTML_CITATIONS, HTML_MATH } from "../mmlConvert/options"
-import { ListNormalizer } from "../mmlHtmlImporter/normalizeLists"
 import { Struct } from "../struct/Struct"
 import { Type } from "../struct/Type"
 import { Button } from "../vue3gui/Button"
 import { useDynamicsEmitter } from "../vue3gui/DynamicsEmitter"
+import { Icon } from "../vue3gui/Icon"
 import { MountNode } from "../vue3gui/MountNode"
+import { Tabs, useTabs } from "../vue3gui/Tabs"
 import { ToggleButton } from "../vue3gui/ToggleButton"
 
 // @ts-ignore
@@ -138,14 +135,25 @@ class _MmlEditorState extends EditorState {
             this.output = renderer.exportDocument(mlDocument)
 
             try {
-                const preview = parse(this.output, { generator: new HtmlGenerator({ hyphenate: false }) })
-                const previewContainer = document.createElement("div")
-                previewContainer.appendChild(preview.domFragment())
+                const previewContainer = (async () => {
+                    // @ts-ignore
+                    const { HtmlGenerator, parse } = await import("latex.js")
+                    const preview = parse(this.output, { generator: new HtmlGenerator({ hyphenate: false }) })
+                    const previewContainer = document.createElement("div")
+                    previewContainer.appendChild(preview.domFragment())
+                    return previewContainer
+                })()
+
+                previewContainer.catch(error => {
+                    this.preview = `<div class="text-danger monospace">${escapeHTML(error.message)}</div>`
+                })
 
                 const iframe = document.createElement("iframe")
                 iframe.addEventListener("load", () => {
                     iframe.contentDocument!.head.innerHTML = LATEX_RESOURCES
-                    iframe.contentDocument!.body.innerHTML = previewContainer.innerHTML
+                    previewContainer.then(previewContainer => {
+                        iframe.contentDocument!.body.innerHTML = previewContainer.innerHTML
+                    })
                 })
                 iframe.contentDocument
                 iframe.setAttribute("class", "border-none absolute-fill")

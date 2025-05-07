@@ -1,7 +1,6 @@
 import { h } from "vue"
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router"
 import { Home } from "./Home"
-import { MiniMLEditor } from "./MiniMLEditor"
 
 const routes: RouteRecordRaw[] = [
     {
@@ -12,7 +11,7 @@ const routes: RouteRecordRaw[] = [
     {
         name: "Editor",
         path: "/editor",
-        component: MiniMLEditor
+        component: () => import("./MiniMLEditor").then(v => v.MiniMLEditor)
     },
     {
         name: "404",

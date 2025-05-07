@@ -22,6 +22,9 @@
         border: 1px solid #d0d7de;
         padding: 0.2em;
         border-radius: 0.2em;
+
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
     }
 
     pre {

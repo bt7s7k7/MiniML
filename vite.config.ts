@@ -22,7 +22,8 @@ export default defineConfig(() => {
     return {
         plugins: [vue(), vueJsx(), _LATEX_ASSETS, mmlPlugin({
             allowedComponents: {
-                "Button": "./src/vue3gui/Button"
+                "XButton": "./src/vue3gui/Button@Button",
+                "pre": "./src/app/CodePreview@CodePreview"
             }
         })],
         resolve: {
