@@ -141,7 +141,16 @@ class _MmlEditorState extends EditorState {
                 const preview = parse(this.output, { generator: new HtmlGenerator({ hyphenate: false }) })
                 const previewContainer = document.createElement("div")
                 previewContainer.appendChild(preview.domFragment())
-                this.preview = previewContainer
+
+                const iframe = document.createElement("iframe")
+                iframe.addEventListener("load", () => {
+                    iframe.contentDocument!.head.innerHTML = LATEX_RESOURCES
+                    iframe.contentDocument!.body.innerHTML = previewContainer.innerHTML
+                })
+                iframe.contentDocument
+                iframe.setAttribute("class", "border-none absolute-fill")
+
+                this.preview = iframe
             } catch (err: any) {
                 // eslint-disable-next-line no-console
                 console.error(err)
@@ -162,6 +171,10 @@ const LATEX_RESOURCES = `
     <link rel="stylesheet" type="text/css" href="/latex/css/katex.css">
     <link rel="stylesheet" type="text/css" href="/latex/css/article.css">
     <script src="/latex/js/base.js"></script>
+    <style>
+        body { display: initial; }
+        .body { padding: 2rem; }
+    </style>
 `
 
 export const MiniMLEditor = (defineComponent({
@@ -224,7 +237,6 @@ export const MiniMLEditor = (defineComponent({
                 <Icon icon={mdiArrowRight} class="mx-2" />
                 <Tabs tabs={exportType} />
                 <Button clear icon={mdiCog} onClick={openConfig} v-label="Config" />
-                {exportType.selected == "latex" && <div innerHTML={LATEX_RESOURCES}></div>}
             </EditorView>
         )
     }
