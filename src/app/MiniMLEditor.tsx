@@ -176,9 +176,9 @@ class _MmlEditorState extends EditorState {
 }
 
 const LATEX_RESOURCES = `
-    <link rel="stylesheet" type="text/css" href="/latex/css/katex.css">
-    <link rel="stylesheet" type="text/css" href="/latex/css/article.css">
-    <script src="/latex/js/base.js"></script>
+    <link rel="stylesheet" type="text/css" href="${import.meta.env.BASE_URL}latex/css/katex.css">
+    <link rel="stylesheet" type="text/css" href="${import.meta.env.BASE_URL}latex/css/article.css">
+    <script src="${import.meta.env.BASE_URL}latex/js/base.js"></script>
     <style>
         body { display: initial; }
         .body { padding: 2rem; }

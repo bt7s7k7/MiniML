@@ -1,3 +1,5 @@
+import "codemirror/addon/mode/simple.js"
+import "codemirror/lib/codemirror.css"
 import "codemirror/mode/javascript/javascript.js"
 import "codemirror/mode/markdown/markdown.js"
 import { defineComponent, renderSlot, VNode } from "vue"
@@ -13,7 +15,7 @@ export const CodePreview = (defineComponent({
             const content = code.children as string
             const language = (code.props!.class as string)?.replace("language-", "") ?? "txt"
 
-            return <CodeHighlight content={content} mode={language == "ts" ? "javascript" : language == "md" ? "markdown" : "plain"} />
+            return <CodeHighlight content={content} mode={language == "ts" ? "javascript" : language == "md" ? "markdown" : "simple"} />
         }
     }
 }))
