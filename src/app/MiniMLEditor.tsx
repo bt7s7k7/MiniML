@@ -1,9 +1,9 @@
-import { mdiArrowRight } from "@mdi/js"
+import { mdiArrowRight, mdiCog } from "@mdi/js"
 import "codemirror/mode/htmlmixed/htmlmixed.js"
 import "codemirror/mode/javascript/javascript.js"
 import "codemirror/mode/markdown/markdown.js"
-import { defineComponent, watch } from "vue"
-import { cloneWithout, escapeHTML, unreachable } from "../comTypes/util"
+import { defineComponent, reactive, watch } from "vue"
+import { cloneArray, cloneWithout, escapeHTML, shallowClone, unreachable } from "../comTypes/util"
 import { Editor } from "../editor/Editor"
 import { EditorView } from "../editor/EditorView"
 import { EditorState } from "../editor/useEditorState"
@@ -23,10 +23,14 @@ import { h } from "vue"
 import { RouterLink } from "vue-router"
 import { Optional } from "../comTypes/Optional"
 import { MmlVueExporter } from "../miniML/MmlVueExporter"
-import { DEFAULT_OPTIONS, useHtmlCitation, useHtmlMath } from "../mmlConvert/options"
+import { DEFAULT_OPTIONS, HTML_CITATIONS, HTML_MATH } from "../mmlConvert/options"
 import { ListNormalizer } from "../mmlHtmlImporter/normalizeLists"
+import { Struct } from "../struct/Struct"
+import { Type } from "../struct/Type"
 import { Button } from "../vue3gui/Button"
+import { useDynamicsEmitter } from "../vue3gui/DynamicsEmitter"
 import { MountNode } from "../vue3gui/MountNode"
+import { ToggleButton } from "../vue3gui/ToggleButton"
 
 // @ts-ignore
 AbstractSyntaxNode.prototype[LogMarker.CUSTOM] = function (this: any) {
@@ -40,15 +44,17 @@ AbstractSyntaxNode.prototype[LogMarker.CUSTOM] = function (this: any) {
     return result
 }
 
-useHtmlCitation()
-useHtmlMath()
+export class _EditorConfig extends Struct.define("EditorConfig", {
+    importType: Type.enum("md", "html"),
+    exportType: Type.enum("html", "latex", "vue"),
+    htmlCitations: Type.boolean.as(Type.withDefault, () => true),
+    htmlMath: Type.boolean.as(Type.withDefault, () => true),
+}, class { constructor() { return reactive(this) } }) { }
 
 class _MmlEditorState extends EditorState {
     public preview: HTMLElement | (() => any) | string | null = null
     public output: string | null = null
     public ast: string | null = null
-    public importType: "md" | "html" = "md"
-    public exportType: "html" | "latex" | "vue" = "html"
 
     public getOutput(): EditorState.OutputTab[] {
         return [
@@ -72,7 +78,7 @@ class _MmlEditorState extends EditorState {
                 label: "Output", name: "raw",
                 content: () => <Editor
                     content={this.output ?? ""} config={{ readOnly: true }}
-                    mode={this.exportType == "html" ? "htmlmixed" : this.exportType == "vue" ? "javascript" : undefined}
+                    mode={this.config.exportType == "html" ? "htmlmixed" : this.config.exportType == "vue" ? "javascript" : undefined}
                     class="absolute-fill"
                 />
             },
@@ -90,20 +96,31 @@ class _MmlEditorState extends EditorState {
 
         let mlDocument
 
-        if (this.importType == "md") {
-            mlDocument = new MmlParser(code, DEFAULT_OPTIONS).parseDocument()
-        } else if (this.importType == "html") {
-            mlDocument = new HtmlImporter(DEFAULT_OPTIONS).importHtml(code)
+        const htmlOptions = shallowClone(DEFAULT_OPTIONS)
+        htmlOptions.shortcuts = cloneArray(DEFAULT_OPTIONS.shortcuts!)
+
+        if (this.config.htmlCitations) {
+            htmlOptions.shortcuts.push(...HTML_CITATIONS)
+        }
+
+        if (this.config.htmlMath) {
+            htmlOptions.shortcuts.push(...HTML_MATH)
+        }
+
+        if (this.config.importType == "md") {
+            mlDocument = new MmlParser(code, htmlOptions).parseDocument()
+        } else if (this.config.importType == "html") {
+            mlDocument = new HtmlImporter(htmlOptions).importHtml(code)
             const normalizer = new ListNormalizer()
             mlDocument = normalizer.transform(mlDocument)
             if (normalizer.wasDropped) unreachable()
         } else unreachable()
 
         this.ast = inspect(mlDocument, { color: DescriptionFormatter.htmlColor })
-        if (this.exportType == "html") {
+        if (this.config.exportType == "html") {
             const renderer = new MmlHtmlRenderer()
             this.preview = this.output = renderer.render(mlDocument)
-        } else if (this.exportType == "vue") {
+        } else if (this.config.exportType == "vue") {
             const exporter = new MmlVueExporter()
             exporter.addAllowedComponent("RouterLink", "Button")
             const output = exporter.render(mlDocument)
@@ -116,7 +133,7 @@ class _MmlEditorState extends EditorState {
                 console.error(err)
                 this.preview = `<div class="text-danger monospace">${escapeHTML(err.message)}</div>`
             }
-        } else if (this.exportType == "latex") {
+        } else if (this.config.exportType == "latex") {
             const renderer = new LaTeXExporter()
             this.output = renderer.exportDocument(mlDocument)
 
@@ -133,6 +150,12 @@ class _MmlEditorState extends EditorState {
         }
         this.ready = true
     }
+
+    constructor(
+        public readonly config: _EditorConfig
+    ) {
+        super()
+    }
 }
 
 const LATEX_RESOURCES = `
@@ -144,18 +167,31 @@ const LATEX_RESOURCES = `
 export const MiniMLEditor = (defineComponent({
     name: "MiniMLEditor",
     setup(props, ctx) {
-        const state = new _MmlEditorState()
+        const emitter = useDynamicsEmitter()
+
+        const config = Optional
+            .value(localStorage.getItem("mini-ml-editor:editor-config"))
+            .filterType("string")
+            .do(source => _EditorConfig.deserialize(JSON.parse(source)))
+            // eslint-disable-next-line no-console
+            .else((error) => (console.error(error), _EditorConfig.default()))
+            .unwrap()
+        const state = new _MmlEditorState(config)
 
         const importType = useTabs({
             "md": "Markdown",
             "html": "HTML"
         })
 
-        state.importType = importType.selected = localStorage.getItem("mini-ml-editor:import-type") as null ?? "md"
-        watch(() => importType.selected, selected => {
-            localStorage.setItem("mini-ml-editor:import-type", selected)
-            state.importType = selected
+        function saveConfig() {
+            localStorage.setItem("mini-ml-editor:editor-config", JSON.stringify(config.serialize()))
             state.compile(state.code.value)
+        }
+
+        importType.selected = config.importType
+        watch(() => importType.selected, selected => {
+            config.importType = selected
+            saveConfig()
         })
 
         const exportType = useTabs({
@@ -164,18 +200,30 @@ export const MiniMLEditor = (defineComponent({
             "vue": "Vue",
         })
 
-        state.exportType = exportType.selected = localStorage.getItem("mini-ml-editor:export-type") as null ?? "html"
+        exportType.selected = config.exportType
         watch(() => exportType.selected, selected => {
-            localStorage.setItem("mini-ml-editor:export-type", selected)
-            state.exportType = selected
-            state.compile(state.code.value)
+            config.exportType = selected
+            saveConfig()
         })
+
+        function openConfig() {
+            emitter.modal(() => (
+                <div class="flex column gap-1">
+                    <h3 class="m-0">Config</h3>
+                    <ToggleButton clear class="mt-2" label="HTML Citations" vModel={config.htmlCitations} onChange={saveConfig} />
+                    <small>Enables creating a cite element by surrounding text with <code>[[</code> and <code>]]</code></small>
+                    <ToggleButton clear class="mt-2" label="HTML Math" vModel={config.htmlMath} onChange={saveConfig} />
+                    <small>Enables creating a Math element by surrounding text with <code>{"<<"}</code> and <code>{">>"}</code></small>
+                </div>
+            ), { props: { cancelButton: "Close" } })
+        }
 
         return () => (
             <EditorView state={state} class="flex-fill" toolbarClass="center-cross" mode={importType.selected == "md" ? "markdown" : "htmlmixed"} localStorageId="mini-ml-editor" root>
                 <Tabs tabs={importType} />
                 <Icon icon={mdiArrowRight} class="mx-2" />
                 <Tabs tabs={exportType} />
+                <Button clear icon={mdiCog} onClick={openConfig} v-label="Config" />
                 {exportType.selected == "latex" && <div innerHTML={LATEX_RESOURCES}></div>}
             </EditorView>
         )
