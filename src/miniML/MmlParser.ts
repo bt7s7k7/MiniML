@@ -120,6 +120,11 @@ export class MmlParser extends GenericParser {
                 const char = this.getCurrent()
                 this.index++
 
+                if (char == "\n") {
+                    result.push(new SyntaxNode.Newline())
+                    continue
+                }
+
                 const prev = result.at(-1)
                 if (prev && prev.kind == "text") {
                     prev.value += char
@@ -427,8 +432,14 @@ export class MmlParser extends GenericParser {
                 lastElement = null
                 continue
             }
-            segment.content.push(textBlock)
-            lastElement = textBlock
+            if (lastElement && lastElement.kind == "segment" && lastElement.content.at(-1)?.kind == "text") {
+                const text = textBlock.content[0] as SyntaxNode.Text
+                text.value = " " + text.value
+                lastElement.content.push(textBlock.content[0])
+            } else {
+                segment.content.push(textBlock)
+                lastElement = textBlock
+            }
         }
 
         return

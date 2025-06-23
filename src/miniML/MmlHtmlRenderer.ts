@@ -181,6 +181,8 @@ export abstract class MmlRenderer {
             return this._renderCodeBlock(node)
         } else if (node.kind == "table") {
             return this._renderTable(node)
+        } else if (node.kind == "newline") {
+            return this._renderElement("br", null, [])
         } else unreachable()
     }
 
@@ -205,6 +207,7 @@ export class MmlHtmlRenderer extends MmlRenderer {
 
     protected override _renderElement(element: string, attributes: Map<string, string> | null, content: SyntaxNode[]): any {
         if (element == "") return this._renderContent(content).join("")
+        if (element == "br") return `<${element}${this._renderAttributes(attributes)}>`
         return `<${element}${this._renderAttributes(attributes)}>${this._renderContent(content).join("")}</${element}>`
     }
 

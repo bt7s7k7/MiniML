@@ -1,4 +1,4 @@
-import { autoFilter, ensureKey, isUpperCase } from "../comTypes/util"
+import { ensureKey, isUpperCase } from "../comTypes/util"
 import { Struct } from "../struct/Struct"
 import { Type } from "../struct/Type"
 import { MmlRenderer } from "./MmlHtmlRenderer"
@@ -145,11 +145,16 @@ export namespace MmlVueExporter {
         use: Type.string.as(Type.nullable)
     }, MmlWidget) {
         public override getValue(parser: MmlParser, content: SyntaxNode[]): SyntaxNode.Inline | null {
+            const attributes = new Map([
+                ["name", this.name],
+            ])
+
+            if (this.use) {
+                attributes.set("use", this.use)
+            }
+
             return new SyntaxNode.Object({
-                type: "raw", value: "<>vue-prop", content, attributes: new Map(autoFilter<[string, string]>([
-                    ["name", this.name],
-                    this.use != null && ["use", this.use],
-                ]))
+                type: "raw", value: "<>vue-prop", content, attributes,
             })
         }
     }
@@ -159,11 +164,16 @@ export namespace MmlVueExporter {
         required: Type.boolean.as(Type.nullable)
     }, MmlWidget) {
         public override getValue(parser: MmlParser, content: SyntaxNode[]): SyntaxNode.Inline | null {
+            const attributes = new Map([
+                ["name", this.name],
+            ])
+
+            if (this.required) {
+                attributes.set("required", "")
+            }
+
             return new SyntaxNode.Object({
-                type: "raw", value: "<>vue-decl", content, attributes: new Map(autoFilter<[string, string]>([
-                    ["name", this.name],
-                    this.required && ["required", ""],
-                ]))
+                type: "raw", value: "<>vue-decl", content, attributes,
             })
         }
     }

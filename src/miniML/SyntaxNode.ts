@@ -62,6 +62,10 @@ export namespace SyntaxNode {
         public readonly kind = "text"
     }
 
+    export class Newline extends Struct.define("Newline", {}, AbstractSyntaxNode) {
+        public readonly kind = "newline"
+    }
+
     export class Raw extends Struct.define("Raw", {
         value: Type.string
     }, AbstractSyntaxNode) {
