@@ -90,7 +90,7 @@ export class MmlParser extends GenericParser {
             const propName = this.readUntil(":")
             this.index++
             if (this.isDone()) break
-            const propValue = this.readUntil(";")
+            const propValue = this.readUntil(";").trim()
 
             container = this._parseInlineCssProperty(propName, propValue, container) as typeof container
         }
