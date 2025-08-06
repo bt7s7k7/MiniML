@@ -1,4 +1,5 @@
 import { FilterBy, Values } from "../comTypes/types"
+import { LogMarker } from "../prettyPrint/ObjectDescription"
 import { Struct } from "../struct/Struct"
 import { Deserializer, Type } from "../struct/Type"
 
@@ -47,6 +48,10 @@ export abstract class AbstractSyntaxNode {
     public getMetadata<T>(name: SyntaxNode.Metadata<T>): T | null {
         if (this._metadata == null) return null
         return this._metadata.get(name) ?? null
+    }
+
+    public static get [LogMarker.CUSTOM_NAME]() {
+        return (this as any as Struct.StructStatics).baseType.name
     }
 }
 
