@@ -35,21 +35,6 @@ export const HTML_MATH: HtmlInputShortcut[] = [
         prefix: "<Math pragma-spc>"
     },
     {
-        start: /(?:\xa0|&nbsp;| )&lt;&lt;/,
-        end: /&gt;&gt;(?:\xa0|&nbsp;| )/,
-        prefix: "<Math pragma-spc1>"
-    },
-    {
-        start: /(?:\xa0|&nbsp;| )&lt;&lt;/,
-        end: "&gt;&gt;",
-        prefix: "<Math pragma-spc>"
-    },
-    {
-        start: "&lt;&lt;",
-        end: /&gt;&gt;(?:\xa0|&nbsp;| )/,
-        prefix: "<Math pragma-spc0>"
-    },
-    {
         start: "&lt;&lt;",
         end: "&gt;&gt;",
         prefix: "<Math>"

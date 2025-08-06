@@ -132,21 +132,21 @@ export class LaTeXExporter {
                 if (node.modifier == "code") {
                     this.result.push(" \\texttt{")
                     this.exportNodeContent(node)
-                    this.result.push("} ")
+                    this.result.push("}")
                     return
                 }
 
                 if (node.modifier == "bold") {
                     this.result.push(" \\textbf{")
                     this.exportNodeContent(node)
-                    this.result.push("} ")
+                    this.result.push("}")
                     return
                 }
 
                 if (node.modifier == "italics") {
                     this.result.push(" \\textit{")
                     this.exportNodeContent(node)
-                    this.result.push("} ")
+                    this.result.push("}")
                     return
                 }
 

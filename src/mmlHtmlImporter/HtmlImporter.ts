@@ -172,7 +172,13 @@ export class HtmlImporter {
     public importTextNode(node: Text) {
         let text = node.textContent
         if (text == null) return null
-        text = text.trim()
+
+        text = text
+            .replace(/\t/g, " ")
+            .replace(/(?<=\r?\n) +| +(?=\r?\n)/g, "")
+            .replace(/\n|\r/g, " ")
+            .replace(/ {2,}/g, " ")
+
         if (text == "") return null
 
         return new SyntaxNode.Text({ value: text })
