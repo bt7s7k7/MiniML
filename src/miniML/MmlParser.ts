@@ -137,7 +137,7 @@ export class MmlParser extends GenericParser {
 
             let object: SyntaxNode.Inline | null = null
 
-            const wasSpace = isWhitespace(this.at(-1), 0)
+            const wasSpace = this.index == 0 || isWhitespace(this.at(-1), 0)
 
             let newTerm: string | null = null
             if (wasSpace && (newTerm = this.consume(["**", "__"]))) {
