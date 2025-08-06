@@ -38,7 +38,9 @@ async function loadHtml(input: string, options: ConvertOptions) {
     if (options.htmlSelector) {
         const _1 = importer.importDocument
         importer.importDocument = function (element) {
-            element = element.querySelector(options.htmlSelector!) as HTMLElement ?? unreachable()
+            const found = element.querySelector<HTMLElement>(options.htmlSelector!)
+            if (found == null) throw new Error(`Cannot find element with selector "${options.htmlSelector}"`)
+            element = found
             return _1.call(this, element)
         }
     }
