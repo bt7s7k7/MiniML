@@ -1,4 +1,5 @@
 import { mdiArrowRight, mdiCog } from "@mdi/js"
+import { Editor as Editor_1 } from "codemirror"
 import "codemirror/mode/htmlmixed/htmlmixed.js"
 import "codemirror/mode/javascript/javascript.js"
 import "codemirror/mode/markdown/markdown.js"
@@ -239,8 +240,21 @@ export const MiniMLEditor = (defineComponent({
             ), { props: { cancelButton: "Close" } })
         }
 
+        function initialize(editor: Editor_1) {
+            editor.on("paste", (instance, event) => {
+                if (importType.selected != "html") return
+                if (event.clipboardData == null) return
+                const htmlContent = [...event.clipboardData.items].find(v => v.type == "text/html" && v.kind == "string")
+                if (!htmlContent) return
+                htmlContent.getAsString((data) => {
+                    editor.replaceSelection(data)
+                })
+                event.preventDefault()
+            })
+        }
+
         return () => (
-            <EditorView state={state} class="flex-fill" toolbarClass="center-cross" mode={importType.selected == "md" ? "markdown" : "htmlmixed"} localStorageId="mini-ml-editor" root>
+            <EditorView state={state} class="flex-fill" toolbarClass="center-cross" mode={importType.selected == "md" ? "markdown" : "htmlmixed"} localStorageId="mini-ml-editor" onMounted={initialize} root>
                 <Tabs tabs={importType} />
                 <Icon icon={mdiArrowRight} class="mx-2" />
                 <Tabs tabs={exportType} />
