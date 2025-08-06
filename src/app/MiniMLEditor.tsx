@@ -11,6 +11,7 @@ import { Editor } from "../editor/Editor"
 import { EditorView } from "../editor/EditorView"
 import { EditorState } from "../editor/useEditorState"
 import { MmlHtmlRenderer } from "../miniML/MmlHtmlRenderer"
+import { MmlMarkdownRenderer } from "../miniML/MmlMarkdownRenderer"
 import { MmlParser } from "../miniML/MmlParser"
 import { MmlVueExporter } from "../miniML/MmlVueExporter"
 import { AbstractSyntaxNode } from "../miniML/SyntaxNode"
@@ -44,7 +45,7 @@ AbstractSyntaxNode.prototype[LogMarker.CUSTOM] = function (this: any) {
 
 export class _EditorConfig extends Struct.define("EditorConfig", {
     importType: Type.enum("md", "html"),
-    exportType: Type.enum("html", "latex", "vue"),
+    exportType: Type.enum("html", "latex", "vue", "md"),
     htmlCitations: Type.boolean.as(Type.withDefault, () => true),
     htmlMath: Type.boolean.as(Type.withDefault, () => true),
 }, class { constructor() { return reactive(this) } }) { }
@@ -165,6 +166,9 @@ class _MmlEditorState extends EditorState {
                 console.error(err)
                 this.preview = `<div class="text-danger monospace">${escapeHTML(err.message)}</div>`
             }
+        } else if (this.config.exportType == "md") {
+            const renderer = new MmlMarkdownRenderer()
+            this.output = renderer.render(mlDocument)
         }
         this.ready = true
     }
@@ -220,6 +224,7 @@ export const MiniMLEditor = (defineComponent({
             "html": "HTML",
             "latex": "LaTeX",
             "vue": "Vue",
+            "md": "Markdown",
         })
 
         exportType.selected = config.exportType
