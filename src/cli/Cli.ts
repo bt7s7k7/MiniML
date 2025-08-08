@@ -112,6 +112,10 @@ export class Cli {
         console.log(...args)
     }
 
+    public autocomplete(input: string) {
+        return [...this._root.getCommands()].map(v => v.fullName).filter(v => v.startsWith(input))
+    }
+
     constructor(
         public readonly exeName: string,
     ) { }
