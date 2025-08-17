@@ -99,7 +99,7 @@ export class Cli {
     }
 
     public async execute(args: string[]) {
-        const exitCode = await this._root.execute(args, 0)
+        const exitCode = await this._root.execute(args)
         if (exitCode != null) return exitCode
 
         console.log("Command not found")
@@ -114,6 +114,10 @@ export class Cli {
 
     public autocomplete(input: string) {
         return [...this._root.getCommands()].map(v => v.fullName).filter(v => v.startsWith(input))
+    }
+
+    public findCommand(args: string[]) {
+        return this._root.findCommand(args, 0)
     }
 
     constructor(
@@ -155,7 +159,7 @@ export namespace Cli {
             childCommand.makeCommand(name, index + 1, impl)
         }
 
-        public async execute(args: string[], index: number): Promise<number | null> {
+        public findCommand(args: string[], index: number): [number, Command] | null {
             if (args.length + 1 <= index) {
                 return null
             }
@@ -163,18 +167,25 @@ export namespace Cli {
             const name = args[index]
             const childCommand = this.children.get(name)
             if (childCommand != null) {
-                return childCommand.execute(args, index + 1)
+                return childCommand.findCommand(args, index + 1)
             }
 
             if (this._impl == null) {
                 const implicit = this.children.get("")
                 if (implicit) {
-                    return implicit.execute(args, index)
+                    return implicit.findCommand(args, index)
                 }
                 return null
             }
 
-            const impl = this._impl
+            return [index, this]
+        }
+
+        public async execute(args: string[]): Promise<number | null> {
+            const result = this.findCommand(args, 0)
+            if (result == null) return null
+            const [index, command] = result
+            const impl = command._impl!
 
             const unnamedArguments: any[] = []
             const namedArguments: Record<string, any> = Object.create(null)
