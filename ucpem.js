@@ -12,6 +12,8 @@ project.prefix("src").use(
 
 project.prefix("src").res("miniML",
     github("bt7s7k7/CommonTypes").res("comTypes"),
+    github("bt7s7k7/LogLib").res("prettyPrint"),
+    github("bt7s7k7/Struct").res("struct"),
 )
 
 project.prefix("src").res("mmlHtmlImporter",
