@@ -101,7 +101,7 @@ export class MmlParser extends GenericParser {
     public parseFragment(term: string | null, result: SyntaxNode[] = []) {
         while (!this.isDone()) {
             const text = this.readUntil(_isSpecialChar)
-            if (text.trim() != "") {
+            if (result.length > 0 || text.trim() != "") {
                 const prev = result.at(-1)
                 if (prev && prev.kind == "text") {
                     prev.value += text
@@ -341,7 +341,7 @@ export class MmlParser extends GenericParser {
                 const content = this.readUntil("```")
                 this.index += 3
                 const codeBlock = new SyntaxNode.CodeBlock({ lang: type != "" ? type : null, content })
-                lastElement = codeBlock
+                lastElement = null
                 segment.content.push(codeBlock)
                 continue
             }
@@ -362,7 +362,7 @@ export class MmlParser extends GenericParser {
             if (heading != null) {
                 const textBlock = this.parseTextBlock()
                 textBlock.type = heading
-                lastElement = textBlock
+                lastElement = null
                 segment.content.push(textBlock)
                 continue
             }
@@ -428,14 +428,19 @@ export class MmlParser extends GenericParser {
             }
 
             const textBlock = this.parseTextBlock()
+
             if (textBlock.content.length == 0) {
                 lastElement = null
                 continue
             }
-            if (lastElement && lastElement.kind == "segment" && lastElement.content.at(-1)?.kind == "text") {
-                const text = textBlock.content[0] as SyntaxNode.Text
-                text.value = " " + text.value
-                lastElement.content.push(textBlock.content[0])
+
+            if (lastElement && lastElement.kind == "segment") {
+                const lastContent = lastElement.content.at(-1)
+                if (lastContent && lastContent.kind == "segment" && lastContent.type == "li") {
+                    lastContent.content.push(new SyntaxNode.Text({ value: " " }), ...textBlock.content)
+                } else {
+                    lastElement.content.push(new SyntaxNode.Text({ value: " " }), ...textBlock.content)
+                }
             } else {
                 segment.content.push(textBlock)
                 lastElement = textBlock
