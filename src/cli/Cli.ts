@@ -272,7 +272,7 @@ export namespace Cli {
                     console.log(error)
                 }
                 console.log("")
-                console.log("Expected parameters: " + this.getHelpString())
+                console.log("Expected parameters: " + command.getHelpString())
                 return 1
             }
 
