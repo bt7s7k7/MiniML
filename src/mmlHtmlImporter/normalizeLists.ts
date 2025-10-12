@@ -47,8 +47,8 @@ export class ListNormalizer extends Transformer<SyntaxNode> {
                 this.processChildren<ListNormalizer>({
                     inheritedFrame: cloneWith(this.currentFrame, {
                         type: this._value.type,
-                        margin: this.currentFrame.margin + (margin ?? 0) + 1
-                    })
+                        margin: this.currentFrame.margin + (margin ?? 0) + 1,
+                    }),
                 })
 
                 if (!this.isDone()) {

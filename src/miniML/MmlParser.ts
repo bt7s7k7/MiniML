@@ -220,7 +220,7 @@ export class MmlParser extends GenericParser {
 
                     if (object && inheritedAttributes) {
                         if (!Type.isObject(widgetType)) unreachable()
-                        for (const [key,] of widgetType.propList) {
+                        for (const [key] of widgetType.propList) {
                             inheritedAttributes.delete(key)
                         }
 
@@ -460,7 +460,7 @@ export class MmlParser extends GenericParser {
 
     constructor(
         input: string,
-        options?: MmlParser.Options
+        options?: MmlParser.Options,
     ) {
         super(input)
         if (options?.widgets) {

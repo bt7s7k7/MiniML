@@ -9,5 +9,5 @@ export const App = defineComponent({
                 <router-view />
             </DynamicsEmitter>
         )
-    }
+    },
 })

@@ -4,14 +4,14 @@ import { LaTeXTableOptionsWidget } from "../mmlLaTeXExporter/LaTeXTableOptionsWi
 
 export const DEFAULT_OPTIONS: HtmlImporter.Options = {
     widgets: [LaTeXMathWidget, LaTeXTableOptionsWidget],
-    shortcuts: []
+    shortcuts: [],
 }
 
 export const HTML_CITATIONS: HtmlInputShortcut[] = [
     {
         start: "[[",
         end: "]]",
-        object: "cite"
+        object: "cite",
     },
 ]
 export function useHtmlCitation() {
@@ -22,22 +22,22 @@ export const HTML_MATH: HtmlInputShortcut[] = [
     {
         start: "$$MATH{{",
         end: "}}$$",
-        object: "Math"
+        object: "Math",
     },
     {
         start: "$$MATH1{{",
         end: "}}$$",
-        prefix: "<Math pragma-spc1>"
+        prefix: "<Math pragma-spc1>",
     },
     {
         start: "$$MATH0{{",
         end: "}}$$",
-        prefix: "<Math pragma-spc>"
+        prefix: "<Math pragma-spc>",
     },
     {
         start: "&lt;&lt;",
         end: "&gt;&gt;",
-        prefix: "<Math>"
+        prefix: "<Math>",
     },
 ]
 export function useHtmlMath() {

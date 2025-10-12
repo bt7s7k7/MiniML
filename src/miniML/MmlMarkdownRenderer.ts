@@ -108,7 +108,7 @@ export class MmlMarkdownRenderer {
         if (node.kind == "text") {
             this.result.push(node.value
                 .replace(/\\/g, "\\\\")
-                .replace(/\n/g, "\\\n")
+                .replace(/\n/g, "\\\n"),
             )
             return
         }

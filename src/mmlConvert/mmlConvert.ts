@@ -13,7 +13,7 @@ export const CONVERT_OPTIONS = {
     htmlSelector: Type.string.as(Type.nullable),
     htmlMath: Type.boolean.as(Type.nullable),
     htmlCite: Type.boolean.as(Type.nullable),
-    htmlNormalizeLists: Type.boolean.as(Type.nullable)
+    htmlNormalizeLists: Type.boolean.as(Type.nullable),
 }
 
 export type ConvertOptions = Type.Extract<Type.TypedObjectType<typeof CONVERT_OPTIONS>>

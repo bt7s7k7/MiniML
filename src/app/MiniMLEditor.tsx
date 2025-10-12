@@ -71,7 +71,7 @@ class _MmlEditorState extends EditorState {
                     ) : (
                         <MountNode node={this.preview} />
                     )
-                ) : <div></div>
+                ) : <div></div>,
             },
             {
                 label: "Output", name: "raw",
@@ -79,12 +79,12 @@ class _MmlEditorState extends EditorState {
                     content={this.output ?? ""} config={{ readOnly: true }}
                     mode={this.config.exportType == "html" ? "htmlmixed" : this.config.exportType == "vue" ? "javascript" : undefined}
                     class="absolute-fill"
-                />
+                />,
             },
             {
                 label: "AST", name: "ast",
-                content: () => this.ast && <pre class="monospace pre-wrap m-0" innerHTML={this.ast}></pre>
-            }
+                content: () => this.ast && <pre class="monospace pre-wrap m-0" innerHTML={this.ast}></pre>,
+            },
         ]
     }
 
@@ -174,7 +174,7 @@ class _MmlEditorState extends EditorState {
     }
 
     constructor(
-        public readonly config: _EditorConfig
+        public readonly config: _EditorConfig,
     ) {
         super()
     }
@@ -206,7 +206,7 @@ export const MiniMLEditor = (defineComponent({
 
         const importType = useTabs({
             "md": "Markdown",
-            "html": "HTML"
+            "html": "HTML",
         })
 
         function saveConfig() {
@@ -266,5 +266,5 @@ export const MiniMLEditor = (defineComponent({
                 <Button clear icon={mdiCog} onClick={openConfig} v-label="Config" />
             </EditorView>
         )
-    }
+    },
 }))

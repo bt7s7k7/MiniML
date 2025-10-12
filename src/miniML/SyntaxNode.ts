@@ -4,7 +4,7 @@ import { Struct } from "../struct/Struct"
 import { Deserializer, Type } from "../struct/Type"
 
 export const COLOR_NAMES = [
-    "white", "black", "primary", "secondary", "success", "danger", "warning"
+    "white", "black", "primary", "secondary", "success", "danger", "warning",
 ] as const
 
 export class _ColorModifierType extends Type.EnumType<typeof COLOR_NAMES[number] | `#${string}`> {
@@ -62,7 +62,7 @@ export namespace SyntaxNode {
     export type NodeWithFormat = Type.ResolveObjectType<typeof _FORMAT_PROPS>
 
     export class Text extends Struct.define("Text", {
-        value: Type.string
+        value: Type.string,
     }, AbstractSyntaxNode) {
         public readonly kind = "text"
     }
@@ -72,14 +72,14 @@ export namespace SyntaxNode {
     }
 
     export class Raw extends Struct.define("Raw", {
-        value: Type.string
+        value: Type.string,
     }, AbstractSyntaxNode) {
         public readonly kind = "raw"
     }
 
     export class Span extends Struct.define("Span", {
         ..._FORMAT_PROPS,
-        content: _SyntaxNode_t.base.as(Type.array)
+        content: _SyntaxNode_t.base.as(Type.array),
     }, AbstractSyntaxNode) {
         public readonly kind = "span"
         declare public content: SyntaxNode[]
@@ -87,7 +87,7 @@ export namespace SyntaxNode {
 
     export class CodeBlock extends Struct.define("CodeBlock", {
         lang: Type.string.as(Type.nullable),
-        content: Type.string
+        content: Type.string,
     }, AbstractSyntaxNode) {
         public readonly kind = "code-block"
     }
@@ -96,7 +96,7 @@ export namespace SyntaxNode {
         ..._FORMAT_PROPS,
         content: _SyntaxNode_t.base.as(Type.array),
         value: Type.string.as(Type.nullable),
-        type: Type.enum("link", "media", "raw")
+        type: Type.enum("link", "media", "raw"),
     }, AbstractSyntaxNode) {
         public readonly kind = "object"
         declare public content: SyntaxNode[]
@@ -124,7 +124,7 @@ export namespace SyntaxNode {
     export class Segment extends Struct.define("Segment", {
         ..._FORMAT_PROPS,
         type: Type.enum("p", 1, 2, 3, 4, "ul", "ol", "li", "quote").as(Type.nullable),
-        content: _SyntaxNode_t.base.as(Type.array)
+        content: _SyntaxNode_t.base.as(Type.array),
     }, AbstractSyntaxNode) {
         public readonly kind = "segment"
         declare public content: SyntaxNode[]

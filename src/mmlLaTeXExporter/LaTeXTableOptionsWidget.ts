@@ -50,7 +50,7 @@ export class LaTeXTableOptionsWidget extends Struct.define("TableOptions", {
             type: "raw",
             value: LaTeXTableOptions.tagname,
             content: [],
-            attributes: new Map([["value", JSON.stringify(options.serialize())]])
+            attributes: new Map([["value", JSON.stringify(options.serialize())]]),
         })
 
         return node

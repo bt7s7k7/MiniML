@@ -109,7 +109,7 @@ export class LaTeXExporter {
             this.result.push(node.value
                 .replace(/\\/g, "\\textbackslash")
                 .replace(/_/g, "\\_")
-                .replace(/\^/g, "\\^{}")
+                .replace(/\^/g, "\\^{}"),
             )
             return
         }

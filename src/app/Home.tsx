@@ -9,5 +9,5 @@ export const Home = (defineComponent({
                 <Content />
             </main>
         )
-    }
+    },
 }))

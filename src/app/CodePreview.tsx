@@ -17,7 +17,7 @@ export const CodePreview = (defineComponent({
 
             return <CodeHighlight content={content} mode={language == "ts" ? "javascript" : language == "md" ? "markdown" : "simple"} />
         }
-    }
+    },
 }))
 
 

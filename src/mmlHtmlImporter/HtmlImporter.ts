@@ -13,7 +13,7 @@ export interface HtmlInputShortcut {
 export class HtmlImporter {
     public shortcuts: HtmlInputShortcut[] = [
         { start: "$$EMBED{{", end: "}}$$" },
-        { start: "$$NOTE{{", end: "}}$$", object: "__discard__" }
+        { start: "$$NOTE{{", end: "}}$$", object: "__discard__" },
     ]
 
     protected readonly _embedParser: HtmlImporter.InlineCssParser
@@ -295,7 +295,7 @@ export class HtmlImporter {
     }
 
     constructor(
-        options?: HtmlImporter.Options
+        options?: HtmlImporter.Options,
     ) {
         this._embedParser = new HtmlImporter.InlineCssParser("", options)
         if (options?.shortcuts) {

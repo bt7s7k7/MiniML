@@ -142,7 +142,7 @@ export class MmlVueExporter extends MmlRenderer {
 export namespace MmlVueExporter {
     export class PropertyWidget extends Struct.define("Prop", {
         name: Type.string,
-        use: Type.string.as(Type.nullable)
+        use: Type.string.as(Type.nullable),
     }, MmlWidget) {
         public override getValue(parser: MmlParser, content: SyntaxNode[]): SyntaxNode.Inline | null {
             const attributes = new Map([
@@ -161,7 +161,7 @@ export namespace MmlVueExporter {
 
     export class PropertyDeclarationWidget extends Struct.define("Declare", {
         name: Type.string,
-        required: Type.boolean.as(Type.nullable)
+        required: Type.boolean.as(Type.nullable),
     }, MmlWidget) {
         public override getValue(parser: MmlParser, content: SyntaxNode[]): SyntaxNode.Inline | null {
             const attributes = new Map([

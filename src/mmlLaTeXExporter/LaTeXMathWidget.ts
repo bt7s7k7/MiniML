@@ -26,8 +26,8 @@ export class LaTeXMathWidget extends Struct.define("Math", {
                     "\\[" + math + "\\]"
                 ) : (
                     "$" + math + "$"
-                )
-            })]
+                ),
+            })],
         })
     }
 }

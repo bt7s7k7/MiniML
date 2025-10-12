@@ -86,7 +86,7 @@ export default defineComponent({
         return () => h("pre", ${JSON.stringify(err.stack)})
     }
 })
-`
+`,
                     }
 
                 }

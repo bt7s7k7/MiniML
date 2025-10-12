@@ -6,21 +6,21 @@ const routes: RouteRecordRaw[] = [
     {
         name: "Home",
         path: "/",
-        component: Home
+        component: Home,
     },
     {
         name: "Editor",
         path: "/editor",
-        component: () => import("./MiniMLEditor").then(v => v.MiniMLEditor)
+        component: () => import("./MiniMLEditor").then(v => v.MiniMLEditor),
     },
     {
         name: "404",
         component: { setup: () => () => h("pre", { class: "m-4" }, "Page not found") },
-        path: "/:page(.*)*"
-    }
+        path: "/:page(.*)*",
+    },
 ]
 
 export const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
-    routes
+    routes,
 })
