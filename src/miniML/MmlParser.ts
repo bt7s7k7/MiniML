@@ -37,6 +37,7 @@ export interface SegmentHistory {
 }
 
 export class MmlParser extends GenericParser {
+    public path: string | null = null
     public widgets = new Struct.PolymorphicSerializer<MmlWidget>("MmlWidget")
 
     protected _parseInlineCssProperty(name: string, value: string, container: SyntaxNode.NodeWithStyle | null): SyntaxNode.NodeWithStyle | null {
@@ -468,11 +469,14 @@ export class MmlParser extends GenericParser {
                 this.widgets.register(widget)
             }
         }
+
+        this.path = options?.path ?? null
     }
 }
 
 export namespace MmlParser {
     export interface Options {
-        widgets?: Constructor<MmlWidget>[]
+        widgets?: Constructor<MmlWidget>[],
+        path?: string | null,
     }
 }
