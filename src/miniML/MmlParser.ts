@@ -278,12 +278,15 @@ export class MmlParser extends GenericParser {
             return
         }
 
-        const attrName = this.readUntil(_isAttrNameTerminator)
+        let attrName = this.readUntil(_isAttrNameTerminator)
         let attrValue: string | null = null
 
         if (attrName == "") return
 
-        if (this.consume("=")) {
+        if (attrName.startsWith("#")) {
+            attrValue = attrName.slice(1)
+            attrName = "id"
+        } else if (this.consume("=")) {
             if (this.consume("\"")) {
                 attrValue = this.readUntil("\"")
                 this.index++

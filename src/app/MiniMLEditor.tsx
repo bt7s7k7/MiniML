@@ -14,11 +14,12 @@ import { MmlHtmlRenderer } from "../miniML/MmlHtmlRenderer"
 import { MmlMarkdownRenderer } from "../miniML/MmlMarkdownRenderer"
 import { MmlParser } from "../miniML/MmlParser"
 import { MmlVueExporter } from "../miniML/MmlVueExporter"
-import { AbstractSyntaxNode } from "../miniML/SyntaxNode"
+import { AbstractSyntaxNode, SyntaxNode } from "../miniML/SyntaxNode"
 import { DEFAULT_OPTIONS, HTML_CITATIONS, HTML_MATH } from "../mmlConvert/options"
 import { HtmlImporter } from "../mmlHtmlImporter/HtmlImporter"
 import { ListNormalizer } from "../mmlHtmlImporter/normalizeLists"
 import { LaTeXExporter } from "../mmlLaTeXExporter/LaTeXExporter"
+import { TypstExporter } from "../mmlTypst/TypstExporter"
 import { DescriptionFormatter } from "../prettyPrint/DescriptionFormatter"
 import { inspect } from "../prettyPrint/inspect"
 import { LogMarker } from "../prettyPrint/ObjectDescription"
@@ -45,7 +46,7 @@ AbstractSyntaxNode.prototype[LogMarker.CUSTOM] = function (this: any) {
 
 export class _EditorConfig extends Struct.define("EditorConfig", {
     importType: Type.enum("md", "html"),
-    exportType: Type.enum("html", "latex", "vue", "md"),
+    exportType: Type.enum("html", "latex", "vue", "md", "typst"),
     htmlCitations: Type.boolean.as(Type.withDefault, () => true),
     htmlMath: Type.boolean.as(Type.withDefault, () => true),
 }, class { constructor() { return reactive(this) } }) { }
@@ -93,7 +94,7 @@ class _MmlEditorState extends EditorState {
         this.preview = null
         this.ast = null
 
-        let mlDocument
+        let mlDocument: SyntaxNode
 
         const htmlOptions = shallowClone(DEFAULT_OPTIONS)
         htmlOptions.shortcuts = cloneArray(DEFAULT_OPTIONS.shortcuts!)
@@ -169,7 +170,11 @@ class _MmlEditorState extends EditorState {
         } else if (this.config.exportType == "md") {
             const renderer = new MmlMarkdownRenderer()
             this.output = renderer.render(mlDocument)
+        } else if (this.config.exportType == "typst") {
+            const renderer = new TypstExporter()
+            this.output = renderer.exportDocument(mlDocument)
         }
+
         this.ready = true
     }
 
@@ -225,6 +230,7 @@ export const MiniMLEditor = (defineComponent({
             "latex": "LaTeX",
             "vue": "Vue",
             "md": "Markdown",
+            "typst": "Typst",
         })
 
         exportType.selected = config.exportType
