@@ -285,7 +285,7 @@ export class HtmlImporter {
 
         this._shortcutMatches = this.shortcuts.map(shortcut => ({
             regexp: new RegExp(`^(?:${typeof shortcut.start == "string" ? escapeRegex(shortcut.start) : shortcut.start.source
-                })(.*)(?:${typeof shortcut.end == "string" ? escapeRegex(shortcut.end) : shortcut.end.source
+                })((?:.|\\n)*)(?:${typeof shortcut.end == "string" ? escapeRegex(shortcut.end) : shortcut.end.source
                 })$`, ""),
             shortcut,
         }))
