@@ -155,6 +155,46 @@ export class TypstExporter {
             return
         }
 
+        if (node.kind == "table") {
+            if (node.content.length == 0) return
+            const sampleRow = node.content[0]
+            if (sampleRow.kind != "table-row") return
+            const columns = sampleRow.content
+
+            this.result.push("#pillar.table(\n")
+            this.indent++
+            this.emitIndent()
+            this.result.push(`cols: "|${"l|".repeat(columns.length)}",\n`)
+
+            this.emitIndent()
+            this.result.push("table.hline(),\n")
+
+            for (let i = 0; i < node.content.length; i++) {
+                const row = node.content[i]
+                if (row.kind != "table-row") unreachable()
+
+                this.emitIndent()
+
+                for (let i = 0; i < row.content.length; i++) {
+                    const column = row.content[i]
+
+                    this.result.push("[")
+                    this.skipNextIndent = true
+                    this.exportNode(column)
+                    this.result.push("],")
+                }
+
+                this.result.push("\n")
+                this.emitIndent()
+                this.result.push("table.hline(),\n")
+            }
+
+            this.indent--
+            this.emitIndent()
+            this.result.push(")")
+            return
+        }
+
         if (node.kind == "object" && node.type == "raw") {
             const isScriptActive = this.isScriptActive()
             if (!isScriptActive) {
