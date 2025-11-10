@@ -20,6 +20,7 @@ import { HtmlImporter } from "../mmlHtmlImporter/HtmlImporter"
 import { ListNormalizer } from "../mmlHtmlImporter/normalizeLists"
 import { LaTeXExporter } from "../mmlLaTeXExporter/LaTeXExporter"
 import { TypstExporter } from "../mmlTypst/TypstExporter"
+import { TypstScriptWidget } from "../mmlTypst/TypstScriptWidget"
 import { DescriptionFormatter } from "../prettyPrint/DescriptionFormatter"
 import { inspect } from "../prettyPrint/inspect"
 import { LogMarker } from "../prettyPrint/ObjectDescription"
@@ -105,6 +106,10 @@ class _MmlEditorState extends EditorState {
 
         if (this.config.htmlMath) {
             htmlOptions.shortcuts.push(...HTML_MATH)
+        }
+
+        if (this.config.exportType == "typst") {
+            (htmlOptions.widgets ??= []).push(TypstScriptWidget)
         }
 
         if (this.config.importType == "md") {

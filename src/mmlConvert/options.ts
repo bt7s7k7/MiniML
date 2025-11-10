@@ -1,9 +1,10 @@
 import { HtmlImporter, HtmlInputShortcut } from "../mmlHtmlImporter/HtmlImporter"
 import { LaTeXMathWidget } from "../mmlLaTeXExporter/LaTeXMathWidget"
 import { LaTeXTableOptionsWidget } from "../mmlLaTeXExporter/LaTeXTableOptionsWidget"
+import { TypstScriptWidget } from "../mmlTypst/TypstScriptWidget"
 
 export const DEFAULT_OPTIONS: HtmlImporter.Options = {
-    widgets: [LaTeXMathWidget, LaTeXTableOptionsWidget],
+    widgets: [LaTeXMathWidget, LaTeXTableOptionsWidget, TypstScriptWidget],
     shortcuts: [],
 }
 

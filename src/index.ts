@@ -17,18 +17,18 @@ const cli = new Cli("mini-ml")
         name: "build", desc: "Converts an input file into an output file",
         params: [
             ["source", Type.string],
-            ["dest", Type.string.as(Type.nullable)]
+            ["dest", Type.string.as(Type.nullable)],
         ],
         options: {
             input: Type.enum("md", "html").as(Type.nullable),
-            output: Type.enum("html", "latex", "dump", "md").as(Type.nullable),
-            ...CONVERT_OPTIONS
+            output: Type.enum("html", "latex", "dump", "md", "typst").as(Type.nullable),
+            ...CONVERT_OPTIONS,
         },
         async callback(source, dest, { input, output, ...convertOptions }) {
-            const outputFileExt = dest != null ? extname(dest) : output == "html" ? ".html" : output == "latex" ? ".tex" : output == "md" ? ".md" : ".html"
+            const outputFileExt = dest != null ? extname(dest) : output == "html" ? ".html" : output == "latex" ? ".tex" : output == "md" ? ".md" : output == "typst" ? ".typ" : ".html"
             const inputFileExt = extname(source)
             input ??= inputFileExt == ".md" ? "md" : inputFileExt == ".html" || inputFileExt == ".htm" ? "html" : "md"
-            output ??= outputFileExt == ".html" ? "html" : outputFileExt == ".tex" ? "latex" : outputFileExt == ".json" ? "dump" : outputFileExt == ".md" ? "md" : "html"
+            output ??= outputFileExt == ".html" ? "html" : outputFileExt == ".tex" ? "latex" : outputFileExt == ".json" ? "dump" : outputFileExt == ".md" ? "md" : outputFileExt == ".typ" ? "typst" : "html"
 
             const destPath = dest ?? join(dirname(source), basename(source, inputFileExt) + outputFileExt)
             cli.printOutput(`Converting ${source} to ${destPath}...`)

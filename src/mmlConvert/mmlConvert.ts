@@ -6,6 +6,7 @@ import { SyntaxNode_t } from "../miniML/SyntaxNode"
 import { HtmlImporter } from "../mmlHtmlImporter/HtmlImporter"
 import { ListNormalizer } from "../mmlHtmlImporter/normalizeLists"
 import { LaTeXExporter } from "../mmlLaTeXExporter/LaTeXExporter"
+import { TypstExporter } from "../mmlTypst/TypstExporter"
 import { Type } from "../struct/Type"
 import { DEFAULT_OPTIONS, useHtmlCitation, useHtmlMath } from "./options"
 
@@ -55,7 +56,7 @@ async function loadHtml(input: string, options: ConvertOptions) {
     return root
 }
 
-export async function mmlConvert(inputText: string, input: "md" | "html", output: "html" | "latex" | "dump" | "md", options: ConvertOptions) {
+export async function mmlConvert(inputText: string, input: "md" | "html", output: "html" | "latex" | "dump" | "md" | "typst", options: ConvertOptions) {
     const document = input == "md" ? (
         new MmlParser(inputText, DEFAULT_OPTIONS).parseDocument()
     ) : input == "html" ? (
@@ -70,6 +71,8 @@ export async function mmlConvert(inputText: string, input: "md" | "html", output
         JSON.stringify(SyntaxNode_t.serialize(document), null, 4)
     ) : output == "md" ? (
         new MmlMarkdownRenderer().render(document)
+    ) : output == "typst" ? (
+        new TypstExporter().exportDocument(document)
     ) : unreachable()
 
     return outputText

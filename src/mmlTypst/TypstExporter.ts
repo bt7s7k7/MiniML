@@ -1,11 +1,13 @@
 import { partitionSequence, shallowClone, unreachable } from "../comTypes/util"
 import { SyntaxNode } from "../miniML/SyntaxNode"
 
+const _PROPERTY_ATTRIBUTE = "_prop"
+
 function _cloneObjectWithoutAttribute(object: SyntaxNode.Object, attribute: string) {
     const objectWithout = shallowClone(object)
 
     objectWithout.attributes = object.attributes!
-    objectWithout.attributes.delete("prop")
+    objectWithout.attributes.delete(attribute)
 
     if (objectWithout.attributes.size == 0) {
         objectWithout.attributes = null
@@ -48,7 +50,7 @@ export class TypstExporter {
         if (node.kind == "segment") {
             if (typeof node.type == "number") {
                 this.emitIndent()
-                this.result.push("=".repeat(node.type))
+                this.result.push("=".repeat(node.type) + " ")
                 this.skipNextIndent = true
                 this.exportNodeContent(node)
                 this.result.push("\n\n")
@@ -170,16 +172,24 @@ export class TypstExporter {
 
             const [content, propertyNodes] = partitionSequence(node.content, v => (
                 v.kind == "object" && v.type == "raw"
-                && v.attributes?.has("prop") != null
+                && v.attributes?.has(_PROPERTY_ATTRIBUTE) != null
             ))
+
+            let printContentToPositionalArgument = false
 
             if (node.attributes || propertyNodes.length > 0) {
                 this.result.push("(")
+
 
                 let first = true
 
                 if (node.attributes) {
                     for (const [key, value] of node.attributes) {
+                        if (key == "_pos") {
+                            printContentToPositionalArgument = true
+                            continue
+                        }
+
                         if (first) {
                             first = false
                         } else {
@@ -211,9 +221,9 @@ export class TypstExporter {
                         this.result.push(", ")
                     }
 
-                    const key = property.attributes!.get("prop")!
+                    const key = property.attributes!.get(_PROPERTY_ATTRIBUTE)!
                     if (key == "main") {
-                        this.exportNode(_cloneObjectWithoutAttribute(property, "prop"))
+                        this.exportNode(_cloneObjectWithoutAttribute(property, _PROPERTY_ATTRIBUTE))
                     } else if (key == "") {
                         this.result.push(property.value + ": ")
                         this.result.push("[")
@@ -223,22 +233,41 @@ export class TypstExporter {
                         this.result.push("]")
                     } else {
                         this.result.push(key + ": ")
-                        this.exportNode(_cloneObjectWithoutAttribute(property, "prop"))
+                        this.exportNode(_cloneObjectWithoutAttribute(property, _PROPERTY_ATTRIBUTE))
                     }
+                }
+
+                if (printContentToPositionalArgument) {
+                    if (!first) {
+                        this.result.push(", ")
+                    }
+
+                    this.result.push("[")
+                    this.scriptActive.push(false)
+
+                    for (const child of content) {
+                        this.exportNode(child)
+                    }
+
+                    this.scriptActive.pop()
+                    this.result.push("]")
                 }
 
                 this.result.push(")")
             }
 
-            this.result.push("[")
-            this.scriptActive.push(false)
+            if (!printContentToPositionalArgument) {
+                this.result.push("[")
+                this.scriptActive.push(false)
 
-            for (const child of content) {
-                this.exportNode(child)
+                for (const child of content) {
+                    this.exportNode(child)
+                }
+
+                this.scriptActive.pop()
+                this.result.push("]")
             }
 
-            this.scriptActive.pop()
-            this.result.push("]")
 
             if (!isScriptActive) {
                 this.scriptActive.pop()
