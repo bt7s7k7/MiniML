@@ -69,8 +69,6 @@ export class TypstExporter {
             }
 
             if (node.type == "ul") {
-                this.result.push("\n")
-
                 this.indent++
                 this.listTypes.push("unordered")
                 this.exportNodeContent(node)
@@ -80,8 +78,6 @@ export class TypstExporter {
             }
 
             if (node.type == "ol") {
-                this.result.push("\n")
-
                 this.indent++
                 this.listTypes.push("ordered")
                 this.exportNodeContent(node)
