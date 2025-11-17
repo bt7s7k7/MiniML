@@ -318,6 +318,27 @@ export namespace HtmlImporter {
                 container ??= new SyntaxNode.Span({ content: [] })
                 container.setMetadata(META_MARGIN_LEFT, parseInt(value))
                 return container
+            } else if (name == "margin") {
+                const directions = value.split(" ").map(v => v.trim()).filter(v => v)
+                const offset = directions.length == 1 ? (
+                    // margin: (all)
+                    parseInt(directions[0])
+                ) : directions.length == 2 ? (
+                    // margin: (vertical) (horizontal)
+                    parseInt(directions[1])
+                ) : directions.length == 3 ? (
+                    // margin: (top) (horizontal) (bottom)
+                    parseInt(directions[1])
+                ) : directions.length == 4 ? (
+                    // margin: (top) (right) (bottom) (left)
+                    parseInt(directions[3])
+                ) : null
+
+                if (offset != null) {
+                    container ??= new SyntaxNode.Span({ content: [] })
+                    container.setMetadata(META_MARGIN_LEFT, offset)
+                    return container
+                }
             }
 
             return super._parseInlineCssProperty(name, value, container)
