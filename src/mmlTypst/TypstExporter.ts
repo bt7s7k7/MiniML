@@ -196,6 +196,12 @@ export class TypstExporter {
         }
 
         if (node.kind == "object" && node.type == "raw") {
+            if (node.value == "cite") {
+                this.result.push("@")
+                this.exportNodeContent(node)
+                return
+            }
+
             const isScriptActive = this.isScriptActive()
             if (!isScriptActive) {
                 this.result.push("#")
