@@ -71,6 +71,7 @@ export class TypstExporter {
             if (node.type == "ul") {
                 this.indent++
                 this.listTypes.push("unordered")
+                this.skipNextIndent = false
                 this.exportNodeContent(node)
                 this.listTypes.pop()
                 this.indent--
@@ -80,6 +81,7 @@ export class TypstExporter {
             if (node.type == "ol") {
                 this.indent++
                 this.listTypes.push("ordered")
+                this.skipNextIndent = false
                 this.exportNodeContent(node)
                 this.listTypes.pop()
                 this.indent--
