@@ -44,3 +44,14 @@ export const HTML_MATH: HtmlInputShortcut[] = [
 export function useHtmlMath() {
     DEFAULT_OPTIONS.shortcuts!.push(...HTML_MATH)
 }
+
+export const HTML_LITERAL: HtmlInputShortcut[] = [
+    {
+        start: "$`",
+        end: "`$",
+        object: "Script",
+    },
+]
+export function useHtmlLiteral() {
+    DEFAULT_OPTIONS.shortcuts!.push(...HTML_LITERAL)
+}

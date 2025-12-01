@@ -8,12 +8,13 @@ import { ListNormalizer } from "../mmlHtmlImporter/normalizeLists"
 import { LaTeXExporter } from "../mmlLaTeXExporter/LaTeXExporter"
 import { TypstExporter } from "../mmlTypst/TypstExporter"
 import { Type } from "../struct/Type"
-import { DEFAULT_OPTIONS, useHtmlCitation, useHtmlMath } from "./options"
+import { DEFAULT_OPTIONS, useHtmlCitation, useHtmlLiteral, useHtmlMath } from "./options"
 
 export const CONVERT_OPTIONS = {
     htmlSelector: Type.string.as(Type.nullable),
     htmlMath: Type.boolean.as(Type.nullable),
     htmlCite: Type.boolean.as(Type.nullable),
+    htmlLiteral: Type.boolean.as(Type.nullable),
     htmlNormalizeLists: Type.boolean.as(Type.nullable),
 }
 
@@ -33,6 +34,10 @@ async function loadHtml(input: string, options: ConvertOptions) {
 
     if (options.htmlCite) {
         useHtmlCitation()
+    }
+
+    if (options.htmlLiteral) {
+        useHtmlLiteral()
     }
 
     const importer = new HtmlImporter(DEFAULT_OPTIONS)

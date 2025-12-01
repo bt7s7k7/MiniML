@@ -15,7 +15,7 @@ import { MmlMarkdownRenderer } from "../miniML/MmlMarkdownRenderer"
 import { MmlParser } from "../miniML/MmlParser"
 import { MmlVueExporter } from "../miniML/MmlVueExporter"
 import { AbstractSyntaxNode, SyntaxNode } from "../miniML/SyntaxNode"
-import { DEFAULT_OPTIONS, HTML_CITATIONS, HTML_MATH } from "../mmlConvert/options"
+import { DEFAULT_OPTIONS, HTML_CITATIONS, HTML_LITERAL, HTML_MATH } from "../mmlConvert/options"
 import { HtmlImporter } from "../mmlHtmlImporter/HtmlImporter"
 import { ListNormalizer } from "../mmlHtmlImporter/normalizeLists"
 import { LaTeXExporter } from "../mmlLaTeXExporter/LaTeXExporter"
@@ -50,6 +50,7 @@ export class _EditorConfig extends Struct.define("EditorConfig", {
     exportType: Type.enum("html", "latex", "vue", "md", "typst"),
     htmlCitations: Type.boolean.as(Type.withDefault, () => true),
     htmlMath: Type.boolean.as(Type.withDefault, () => true),
+    htmlLiteral: Type.boolean.as(Type.withDefault, () => true),
 }, class { constructor() { return reactive(this) } }) { }
 
 class _MmlEditorState extends EditorState {
@@ -106,6 +107,10 @@ class _MmlEditorState extends EditorState {
 
         if (this.config.htmlMath) {
             htmlOptions.shortcuts.push(...HTML_MATH)
+        }
+
+        if (this.config.htmlLiteral) {
+            htmlOptions.shortcuts.push(...HTML_LITERAL)
         }
 
         if (this.config.exportType == "typst") {
@@ -252,6 +257,8 @@ export const MiniMLEditor = (defineComponent({
                     <small>Enables creating a cite element by surrounding text with <code>[[</code> and <code>]]</code></small>
                     <ToggleButton clear class="mt-2" label="HTML Math" vModel={config.htmlMath} onChange={saveConfig} />
                     <small>Enables creating a Math element by surrounding text with <code>{"<<"}</code> and <code>{">>"}</code></small>
+                    <ToggleButton clear class="mt-2" label="HTML Literal" vModel={config.htmlLiteral} onChange={saveConfig} />
+                    <small>Enables creating a Script element by surrounding text with <code>{"$`"}</code> and <code>{"`$"}</code></small>
                 </div>
             ), { props: { cancelButton: "Close" } })
         }
