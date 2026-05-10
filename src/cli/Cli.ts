@@ -1,14 +1,22 @@
 /* eslint-disable no-console */
 import { EMPTY_SET } from "../comTypes/const"
 import { Optional } from "../comTypes/Optional"
-import { ensureKey, Reducers, unreachable } from "../comTypes/util"
+import { ensureKey, ensureProperty, Reducers, unreachable } from "../comTypes/util"
 import { DeserializationError, Type } from "../struct/Type"
 
 const _INVALID = Symbol.for("cli.invalidArgument")
+const _RESET_ARRAY = Symbol.for("cli.resetArray")
 
-function _parseArgumentValue(name: string, value: string, type: Type<any>, errors: string[]): any | typeof _INVALID {
+function _parseArgumentValue(name: string, value: string, type: Type<any>, errors: string[]): any | typeof _INVALID | typeof _RESET_ARRAY {
     if (Type.isNullable(type)) {
         type = type.base
+    }
+
+    if (Type.isArray(type)) {
+        type = type.elementType
+        if (value == "") {
+            return _RESET_ARRAY
+        }
     }
 
     if (type.name == Type.string.name) {
@@ -219,6 +227,19 @@ export namespace Cli {
                         }
 
                         missingArguments.delete(name)
+
+                        if (parsedValue == _RESET_ARRAY) {
+                            namedArguments[name] = []
+                            continue
+                        }
+
+
+                        if (Type.isArray(argumentType)) {
+                            const array = ensureProperty(namedArguments, name, () => [])
+                            array.push(parsedValue)
+                            continue
+                        }
+
                         namedArguments[name] = parsedValue
                         continue
                     }
@@ -231,6 +252,29 @@ export namespace Cli {
                 }
 
                 const [name, type] = impl.params[unnamedIndex]
+                if (Type.isArray(type)) {
+                    const array: any[] = []
+
+                    for (let j = i; j < args.length; j++) {
+                        const value = args[j]
+                        const parsedValue = _parseArgumentValue(`<${name}>`, value, type, errors)
+
+                        if (parsedValue == _INVALID) {
+                            continue
+                        }
+
+                        if (parsedValue == _RESET_ARRAY) {
+                            array.length = 0
+                            continue
+                        }
+
+                        array.push(parsedValue)
+                    }
+
+                    unnamedArguments.push(array)
+                    break
+                }
+
                 const parsedValue = _parseArgumentValue(`<${name}>`, argument, type, errors)
                 if (parsedValue == _INVALID) {
                     unnamedArguments.push(_INVALID)
