@@ -233,7 +233,6 @@ export namespace Cli {
                             continue
                         }
 
-
                         if (Type.isArray(argumentType)) {
                             const array = ensureProperty(namedArguments, name, () => [])
                             array.push(parsedValue)
@@ -291,6 +290,8 @@ export namespace Cli {
                     if (Type.isNullable(type)) {
                         unnamedArguments.push(null)
                         continue
+                    } else if (Type.isArray(type)) {
+                        continue
                     }
 
                     errors.push(`Missing parameter "<${name}>"`)
@@ -305,6 +306,8 @@ export namespace Cli {
                         namedArguments[missing] = null
                     } else if (Type.isOptional(type)) {
                         namedArguments[missing] = type.default()
+                    } else if (Type.isArray(type)) {
+                        namedArguments[missing] = []
                     } else {
                         errors.push(`Missing option "--${missing}"`)
                     }
